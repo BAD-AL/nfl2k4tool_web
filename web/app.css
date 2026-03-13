@@ -968,121 +968,302 @@ body {
    Section 8: Schedule Editor (weekly grid, matrix, integrity)
    ═══════════════════════════════════════════════════════ */
 
-.schedule-editor {
+#screen-schedule:not([hidden]) {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  overflow: hidden;
 }
 
-.schedule-placeholder {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: var(--color-muted);
-}
+/* ─── Tab bar ─────────────────────────────────────────────────────────────── */
 
-.schedule-placeholder .material-symbols-outlined {
-  font-size: 48px;
-}
-
-.schedule-tabs {
+.sch-tab-bar {
   display: flex;
   gap: 0;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
+  flex-shrink: 0;
 }
 
-.schedule-tab {
+.sch-tab {
   padding: 10px 16px;
   font-size: 13px;
   color: var(--color-muted);
   border-bottom: 2px solid transparent;
   cursor: pointer;
+  user-select: none;
 }
 
-.schedule-tab.active {
+.sch-tab.active {
   color: var(--color-gold);
   border-bottom-color: var(--color-gold);
   font-weight: 600;
 }
 
-.week-picker {
+/* ─── Content slot ────────────────────────────────────────────────────────── */
+
+.sch-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── Week pills ──────────────────────────────────────────────────────────── */
+
+.sch-week-pills {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  padding: 8px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
+  flex-shrink: 0;
 }
 
-.week-chip {
-  padding: 3px 8px;
+.sch-week-pill {
+  padding: 3px 9px;
   border-radius: 4px;
   border: 1px solid var(--color-border);
   background: var(--color-chip);
   color: var(--color-muted);
   font-size: 11px;
   cursor: pointer;
+  user-select: none;
 }
 
-.week-chip.active {
+.sch-week-pill.active {
   background: var(--color-active-bg);
   border-color: var(--color-gold);
   color: var(--color-gold);
+  font-weight: 600;
 }
 
-.games-grid {
+/* ─── Weekly header ───────────────────────────────────────────────────────── */
+
+.sch-weekly-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  flex-shrink: 0;
+}
+
+.sch-week-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.sch-add-btn {
+  margin-left: auto;
+  font-size: 12px;
+  padding: 4px 12px;
+}
+
+/* ─── Game grid ───────────────────────────────────────────────────────────── */
+
+.sch-game-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 12px;
+  padding: 8px 12px 12px;
   overflow-y: auto;
   flex: 1;
+  align-content: flex-start;
 }
 
-.game-card {
+.sch-game-card {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 0;
   border: 1px solid var(--color-border);
   border-radius: 6px;
   background: var(--color-surface);
-  min-width: 200px;
+  overflow: hidden;
 }
 
-.game-team {
-  font-size: 13px;
-  font-weight: 600;
+.sch-team-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 14px;
   cursor: pointer;
-  text-transform: capitalize;
 }
 
-.game-team.away {
-  color: var(--schedule-away);
+.sch-team-box:hover {
+  background: var(--color-chip);
 }
 
-.game-team.home {
-  color: var(--schedule-home);
+.sch-team-label {
+  font-size: 10px;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.game-at {
+.sch-team-abbr {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sch-team-name {
+  font-size: 10px;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.away-color { color: var(--schedule-away); }
+.home-color { color: var(--schedule-home); }
+
+.sch-vs {
   font-size: 11px;
   color: var(--color-muted);
+  padding: 0 4px;
+  flex-shrink: 0;
 }
 
-.game-remove {
+.sch-remove-btn {
   margin-left: auto;
-  font-size: 14px;
+  padding: 6px 10px;
+  background: none;
+  border: none;
+  border-left: 1px solid var(--color-border);
   color: var(--color-muted);
+  font-size: 13px;
+  cursor: pointer;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+
+.sch-remove-btn:hover {
+  color: var(--color-danger);
+  background: rgba(207, 34, 46, 0.08);
+}
+
+/* ─── Team Matrix ─────────────────────────────────────────────────────────── */
+
+.sch-matrix-scroll {
+  flex: 1;
+  overflow: auto;
+}
+
+.sch-matrix {
+  border-collapse: collapse;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.sch-matrix th,
+.sch-matrix td {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.sch-matrix th {
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sch-matrix-team-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--color-surface);
+  font-weight: 600;
+  text-align: left !important;
+}
+
+.sch-matrix th.sch-matrix-team-col {
+  z-index: 3;
+}
+
+.sch-matrix-home {
+  color: var(--schedule-home);
   cursor: pointer;
 }
 
-.game-remove:hover {
+.sch-matrix-away {
+  color: var(--schedule-away);
+  cursor: pointer;
+}
+
+.sch-matrix-bye {
+  color: var(--color-muted);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.sch-matrix-home:hover,
+.sch-matrix-away:hover {
+  background: var(--color-chip);
+}
+
+.sch-matrix-bye:hover {
+  background: var(--color-chip);
+}
+
+/* ─── Integrity ───────────────────────────────────────────────────────────── */
+
+.sch-integrity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.sch-integrity-item .material-symbols-outlined {
+  font-size: 18px;
+  flex-shrink: 0;
   color: var(--color-danger);
+  margin-top: 1px;
+}
+
+.sch-integrity-item.ok .material-symbols-outlined {
+  color: var(--color-success);
+}
+
+/* ─── Team Picker Dialog ──────────────────────────────────────────────────── */
+
+.sch-picker-dialog {
+  width: 340px;
+}
+
+.sch-picker-body {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 12px 16px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.sch-team-btn {
+  padding: 8px 4px;
+  background: var(--color-chip);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+.sch-team-btn:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+  background: var(--color-active-bg);
 }
 
 /* ═══════════════════════════════════════════════════════
