@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFL2K5 Schedule Editor - Interactive Mockup</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --secondary: #64748b;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent-home: #10b981;
+            --accent-away: #f59e0b;
+            --danger: #ef4444;
+            --border: #334155;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background: #020617;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tabs {
+            display: flex;
+            background: #1e293b;
+            padding: 0 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            background: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        main { flex: 1; overflow-y: auto; padding: 1.5rem; }
+        .view { display: none; }
+        .view.active { display: block; }
+
+        .card { background: var(--card-bg); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+
+        /* Weekly View */
+        .week-nav { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .week-pill { padding: 0.5rem 1rem; background: #334155; border-radius: 9999px; cursor: pointer; font-size: 0.875rem; transition: 0.2s; border: 1px solid transparent; }
+        .week-pill:hover { background: #475569; }
+        .week-pill.active { background: var(--primary); color: white; border-color: #60a5fa; }
+
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+        .game-card { 
+            background: #0f172a; border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem;
+            display: flex; align-items: center; justify-content: space-between; position: relative;
+        }
+        .team-box { 
+            display: flex; flex-direction: column; align-items: center; gap: 0.25rem; width: 42%; cursor: pointer;
+            padding: 0.5rem; border-radius: 0.375rem; transition: 0.2s;
+        }
+        .team-box:hover { background: #1e293b; outline: 1px solid var(--primary); }
+        .team-abbr { font-size: 1.25rem; font-weight: 800; letter-spacing: 0.05em; }
+        .team-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; }
+        .vs { color: var(--text-dim); font-weight: bold; font-style: italic; }
+
+        /* Matrix View */
+        .matrix-scroll { overflow-x: auto; max-height: 70vh; border-radius: 0.5rem; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; background: #0f172a; }
+        th, td { border: 1px solid var(--border); padding: 0.5rem; text-align: center; min-width: 50px; }
+        th { background: #1e293b; position: sticky; top: 0; z-index: 10; font-weight: bold; }
+        .team-col { position: sticky; left: 0; background: #1e293b; z-index: 11; text-align: left; font-weight: bold; min-width: 80px; }
+        .m-home { color: var(--accent-home); font-weight: 600; cursor: pointer; }
+        .m-away { color: var(--accent-away); font-weight: 600; cursor: pointer; }
+        .m-bye { color: #475569; font-style: italic; }
+        td:hover:not(.team-col) { background: #1e293b; outline: 1px solid var(--primary); }
+
+        /* Raw View */
+        textarea { width: 100%; height: 60vh; background: #020617; color: #10b981; font-family: 'Courier New', Courier, monospace; border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; resize: vertical; }
+
+        /* Modal */
+        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal { background: var(--card-bg); width: 450px; border-radius: 1rem; border: 1px solid var(--primary); overflow: hidden; }
+        .modal-header { padding: 1rem; background: #0f172a; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+        .modal-body { padding: 1.5rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; max-height: 400px; overflow-y: auto; }
+        .team-btn { padding: 0.5rem; background: #334155; border: 1px solid transparent; border-radius: 0.375rem; color: white; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .team-btn:hover { background: var(--primary); }
+
+        .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        .integrity-item { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; padding: 0.75rem; border-radius: 0.5rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .integrity-item.ok { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: var(--accent-home); }
+    </style>
+</head>
+<body>
+
+<header>
+    <div style="font-size: 1.25rem; font-weight: 900; color: var(--primary)">NFL2K5 SCHEDULER</div>
+    <div style="font-size: 0.875rem; color: var(--text-dim)">Season 2004 Prototype</div>
+</header>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchView('weekly')">Weekly Grid</button>
+    <button class="tab-btn" onclick="switchView('matrix')">Team Matrix</button>
+    <button class="tab-btn" onclick="switchView('integrity')">Integrity</button>
+    <button class="tab-btn" onclick="switchView('raw')">Raw Text</button>
+</div>
+
+<main>
+    <div id="weekly" class="view active">
+        <div class="week-nav" id="weekNav"></div>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 id="weekHeading" style="margin: 0;">Week 1</h2>
+                <button class="btn btn-primary" onclick="addGame()">+ Add Game</button>
+            </div>
+            <div class="game-grid" id="gameGrid"></div>
+        </div>
+    </div>
+
+    <div id="matrix" class="view">
+        <div class="card">
+            <h2 style="margin-top: 0">Season Matrix</h2>
+            <div class="matrix-scroll" id="matrixContainer"></div>
+        </div>
+    </div>
+
+    <div id="integrity" class="view">
+        <div class="card">
+            <h2 style="margin-top: 0">Schedule Integrity Check</h2>
+            <div id="integrityReport"></div>
+        </div>
+    </div>
+
+    <div id="raw" class="view">
+        <div class="card">
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <button class="btn btn-primary" onclick="importFromText()">Import Text</button>
+                <button class="btn" style="background: var(--secondary)" onclick="copyToClipboard()">Copy to Clipboard</button>
+            </div>
+            <textarea id="rawText" placeholder="Paste schedule here..."></textarea>
+        </div>
+    </div>
+</main>
+
+<div id="modalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <span id="modalTitle" style="font-weight: bold;">Select Team</span>
+            <button onclick="closeModal()" style="background:none; border:none; color:white; cursor:pointer;">✕</button>
+        </div>
+        <div class="modal-body" id="teamPicker"></div>
+    </div>
+</div>
+
+<script>
+    const TEAM_LIST = [
+        "ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE", "DAL", "DEN", "DET", "GB", "HOU", "IND", "JAX", "KC",
+        "MIA", "MIN", "NE", "NO", "NYG", "NYJ", "OAK", "PHI", "PIT", "SD", "SEA", "SF", "STL", "TB", "TEN", "WAS"
+    ];
+
+    const TEAM_NAME_MAP = {
+        "cardinals": "ARI", "falcons": "ATL", "ravens": "BAL", "bills": "BUF", "panthers": "CAR", "bears": "CHI",
+        "bengals": "CIN", "browns": "CLE", "cowboys": "DAL", "broncos": "DEN", "lions": "DET", "packers": "GB",
+        "texans": "HOU", "colts": "IND", "jaguars": "JAX", "chiefs": "KC", "dolphins": "MIA", "vikings": "MIN",
+        "patriots": "NE", "saints": "NO", "giants": "NYG", "jets": "NYJ", "raiders": "OAK", "eagles": "PHI",
+        "steelers": "PIT", "chargers": "SD", "seahawks": "SEA", "49ers": "SF", "rams": "STL", "buccaneers": "TB",
+        "titans": "TEN", "redskins": "WAS"
+    };
+
+    const INITIAL_TEXT = `YEAR=2004
+
+WEEK 1  [16 games]
+colts at patriots
+jaguars at bills
+lions at bears
+ravens at browns
+chargers at texans
+titans at dolphins
+seahawks at saints
+bengals at jets
+raiders at steelers
+cardinals at rams
+buccaneers at redskins
+cowboys at vikings
+giants at eagles
+chiefs at broncos
+falcons at 49ers
+packers at panthers
+
+WEEK 2  [16 games]
+rams at falcons
+steelers at ravens
+browns at cowboys
+texans at lions
+bears at packers
+broncos at jaguars
+panthers at chiefs
+49ers at saints
+redskins at giants
+seahawks at buccaneers
+patriots at cardinals
+bills at raiders
+jets at chargers
+colts at titans
+dolphins at bengals
+vikings at eagles
+
+WEEK 3  [14 games]
+cardinals at falcons
+ravens at bengals
+eagles at lions
+texans at chiefs
+steelers at dolphins
+bears at vikings
+browns at giants
+saints at rams
+chargers at broncos
+jaguars at titans
+packers at colts
+49ers at seahawks
+buccaneers at raiders
+cowboys at redskins
+
+WEEK 4  [14 games]
+patriots at bills
+eagles at bears
+redskins at browns
+giants at packers
+raiders at texans
+colts at jaguars
+saints at cardinals
+bengals at steelers
+falcons at panthers
+jets at dolphins
+titans at chargers
+broncos at buccaneers
+rams at 49ers
+chiefs at ravens
+
+WEEK 5  [14 games]
+lions at falcons
+giants at cowboys
+vikings at texans
+raiders at colts
+dolphins at patriots
+buccaneers at saints
+bills at jets
+browns at steelers
+panthers at broncos
+jaguars at chargers
+cardinals at 49ers
+rams at seahawks
+ravens at redskins
+titans at packers
+
+WEEK 6  [14 games]
+chargers at falcons
+dolphins at bills
+redskins at bears
+bengals at browns
+packers at lions
+chiefs at jaguars
+49ers at jets
+seahawks at patriots
+panthers at eagles
+texans at titans
+steelers at cowboys
+broncos at raiders
+vikings at saints
+buccaneers at rams
+
+WEEK 7  [14 games]
+bills at ravens
+chargers at panthers
+eagles at browns
+jaguars at colts
+falcons at chiefs
+rams at dolphins
+titans at vikings
+lions at giants
+jets at patriots
+bears at buccaneers
+seahawks at cardinals
+cowboys at packers
+saints at raiders
+broncos at bengals
+
+WEEK 8  [14 games]
+cardinals at bills
+lions at cowboys
+jaguars at texans
+colts at chiefs
+giants at vikings
+patriots at steelers
+bengals at titans
+packers at redskins
+falcons at broncos
+panthers at seahawks
+ravens at eagles
+raiders at chargers
+49ers at bears
+dolphins at jets
+
+WEEK 9  [14 games]
+jets at bills
+raiders at panthers
+cowboys at bengals
+redskins at lions
+cardinals at dolphins
+eagles at steelers
+bears at giants
+chiefs at buccaneers
+saints at chargers
+seahawks at 49ers
+texans at broncos
+patriots at rams
+browns at ravens
+vikings at colts
+
+WEEK 10  [14 games]
+buccaneers at falcons
+steelers at browns
+texans at colts
+lions at jaguars
+ravens at jets
+chiefs at saints
+seahawks at rams
+bears at titans
+giants at cardinals
+bengals at redskins
+vikings at packers
+panthers at 49ers
+bills at patriots
+eagles at cowboys
+
+WEEK 11  [16 games]
+cowboys at ravens
+rams at bills
+cardinals at panthers
+colts at bears
+steelers at bengals
+jets at browns
+titans at jaguars
+lions at vikings
+broncos at saints
+49ers at buccaneers
+chargers at raiders
+dolphins at seahawks
+falcons at giants
+redskins at eagles
+packers at texans
+patriots at chiefs
+
+WEEK 12  [16 games]
+bears at cowboys
+colts at lions
+buccaneers at panthers
+browns at bengals
+titans at texans
+chargers at chiefs
+jaguars at vikings
+ravens at patriots
+eagles at giants
+redskins at steelers
+jets at cardinals
+saints at falcons
+dolphins at 49ers
+bills at seahawks
+raiders at broncos
+rams at packers
+
+WEEK 13  [16 games]
+bengals at ravens
+vikings at bears
+patriots at browns
+cardinals at lions
+titans at colts
+bills at dolphins
+texans at jets
+panthers at saints
+49ers at rams
+falcons at buccaneers
+chiefs at raiders
+broncos at chargers
+packers at eagles
+giants at redskins
+steelers at jaguars
+cowboys at seahawks
+
+WEEK 14  [16 games]
+raiders at falcons
+giants at ravens
+browns at bills
+saints at cowboys
+lions at packers
+colts at texans
+bears at jaguars
+seahawks at vikings
+dolphins at broncos
+bengals at patriots
+49ers at cardinals
+jets at steelers
+rams at panthers
+buccaneers at chargers
+eagles at redskins
+chiefs at titans
+
+WEEK 15  [16 games]
+steelers at giants
+redskins at 49ers
+panthers at falcons
+texans at bears
+bills at bengals
+vikings at lions
+jaguars at packers
+chargers at browns
+seahawks at jets
+rams at cardinals
+cowboys at eagles
+broncos at chiefs
+saints at buccaneers
+ravens at colts
+titans at raiders
+patriots at dolphins
+
+WEEK 16  [16 games]
+packers at vikings
+raiders at chiefs
+broncos at titans
+giants at bengals
+bears at lions
+chargers at colts
+texans at jaguars
+falcons at saints
+ravens at steelers
+patriots at jets
+panthers at buccaneers
+redskins at cowboys
+bills at 49ers
+browns at dolphins
+cardinals at seahawks
+eagles at rams
+
+WEEK 17  [16 games]
+dolphins at ravens
+steelers at bills
+saints at panthers
+packers at bears
+browns at texans
+49ers at patriots
+bengals at eagles
+jets at rams
+lions at titans
+vikings at redskins
+buccaneers at cardinals
+falcons at seahawks
+colts at broncos
+jaguars at raiders
+cowboys at giants
+chiefs at chargers`;
+
+    let schedule = [];
+    let currentWeek = 0;
+    let editContext = null;
+
+    function init() {
+        document.getElementById('rawText').value = INITIAL_TEXT;
+        importFromText();
+        renderWeekNav();
+        renderWeekly();
+        populateTeamPicker();
+    }
+
+    function switchView(viewId) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        document.querySelector(`.tab-btn[onclick="switchView('${viewId}')"]`).classList.add('active');
+        
+        if (viewId === 'matrix') renderMatrix();
+        if (viewId === 'integrity') checkIntegrity();
+        if (viewId === 'raw') updateRawText();
+    }
+
+    function importFromText() {
+        const text = document.getElementById('rawText').value;
+        const weeks = text.split(/WEEK \d+/i).slice(1);
+        schedule = weeks.map(w => {
+            return w.trim().split(/\r?\n/)
+                .filter(line => line.includes(' at '))
+                .map(line => {
+                    const parts = line.split(' at ');
+                    const awayRaw = parts[0].trim().toLowerCase();
+                    const homeRaw = parts[1].trim().toLowerCase();
+                    return {
+                        away: TEAM_NAME_MAP[awayRaw] || awayRaw.toUpperCase(),
+                        home: TEAM_NAME_MAP[homeRaw] || homeRaw.toUpperCase()
+                    };
+                });
+        });
+        renderWeekly();
+    }
+
+    function updateRawText() {
+        let text = "YEAR=2004\n\n";
+        schedule.forEach((week, i) => {
+            text += `WEEK ${i+1}  [${week.length} games]\n`;
+            week.forEach(g => {
+                const awayName = Object.keys(TEAM_NAME_MAP).find(key => TEAM_NAME_MAP[key] === g.away) || g.away;
+                const homeName = Object.keys(TEAM_NAME_MAP).find(key => TEAM_NAME_MAP[key] === g.home) || g.home;
+                text += `${awayName} at ${homeName}\n`;
+            });
+            text += "\n";
+        });
+        document.getElementById('rawText').value = text.trim();
+    }
+
+    function renderWeekNav() {
+        const nav = document.getElementById('weekNav');
+        nav.innerHTML = '';
+        for (let i = 0; i < 17; i++) {
+            const pill = document.createElement('div');
+            pill.className = `week-pill ${i === currentWeek ? 'active' : ''}`;
+            pill.innerText = `Week ${i+1}`;
+            pill.onclick = () => { currentWeek = i; renderWeekNav(); renderWeekly(); };
+            nav.appendChild(pill);
+        }
+    }
+
+    function renderWeekly() {
+        document.getElementById('weekHeading').innerText = `Week ${currentWeek + 1}`;
+        const grid = document.getElementById('gameGrid');
+        grid.innerHTML = '';
+        
+        const games = schedule[currentWeek] || [];
+        games.forEach((game, idx) => {
+            const card = document.createElement('div');
+            card.className = 'game-card';
+            card.innerHTML = `
+                <div class="team-box" onclick="openPicker(${currentWeek}, ${idx}, 'away')">
+                    <span class="team-label">Away</span>
+                    <span class="team-abbr">${game.away}</span>
+                </div>
+                <div class="vs">@</div>
+                <div class="team-box" onclick="openPicker(${currentWeek}, ${idx}, 'home')">
+                    <span class="team-label">Home</span>
+                    <span class="team-abbr">${game.home}</span>
+                </div>
+                <button onclick="removeGame(${idx})" style="position:absolute; top:5px; right:5px; background:none; border:none; color:#475569; cursor:pointer;">✕</button>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function renderMatrix() {
+        const container = document.getElementById('matrixContainer');
+        let html = '<table><tr><th class="team-col">TEAM</th>';
+        for (let i = 1; i <= 17; i++) html += `<th>W${i}</th>`;
+        html += '</tr>';
+
+        TEAM_LIST.sort().forEach(team => {
+            html += `<tr><td class="team-col">${team}</td>`;
+            for (let w = 0; w < 17; w++) {
+                const week = schedule[w] || [];
+                const gameIdx = week.findIndex(g => g.home === team || g.away === team);
+                const game = week[gameIdx];
+                
+                if (!game) {
+                    html += `<td class="m-bye" onclick="addGameToWeek(${w}, '${team}')">BYE</td>`;
+                } else if (game.home === team) {
+                    html += `<td class="m-home" onclick="openPicker(${w}, ${gameIdx}, 'away')">${game.away}</td>`;
+                } else {
+                    html += `<td class="m-away" onclick="openPicker(${w}, ${gameIdx}, 'home')">@${game.home}</td>`;
+                }
+            }
+            html += '</tr>';
+        });
+        html += '</table>';
+        container.innerHTML = html;
+    }
+
+    function checkIntegrity() {
+        const report = document.getElementById('integrityReport');
+        report.innerHTML = '';
+        let issues = [];
+
+        // Check 1: Teams playing twice in a week
+        schedule.forEach((week, wIdx) => {
+            const seen = new Set();
+            const dups = new Set();
+            week.forEach(g => {
+                if (seen.has(g.away)) dups.add(g.away);
+                seen.add(g.away);
+                if (seen.has(g.home)) dups.add(g.home);
+                seen.add(g.home);
+            });
+            dups.forEach(t => issues.push(`Week ${wIdx+1}: ${t} is scheduled for multiple games.`));
+        });
+
+        // Check 2: Total games per team
+        TEAM_LIST.forEach(team => {
+            let count = 0;
+            schedule.forEach(week => {
+                if (week.some(g => g.home === team || g.away === team)) count++;
+            });
+            if (count !== 16) issues.push(`${team} has ${count} games (should be 16).`);
+        });
+
+        if (issues.length === 0) {
+            report.innerHTML = '<div class="integrity-item ok">✔ All 32 teams have exactly 16 games and no double-headers.</div>';
+        } else {
+            issues.forEach(iss => {
+                const div = document.createElement('div');
+                div.className = 'integrity-item';
+                div.innerHTML = `<span>⚠</span> ${iss}`;
+                report.appendChild(div);
+            });
+        }
+    }
+
+    function populateTeamPicker() {
+        const picker = document.getElementById('teamPicker');
+        TEAM_LIST.sort().forEach(team => {
+            const btn = document.createElement('button');
+            btn.className = 'team-btn';
+            btn.innerText = team;
+            btn.onclick = () => selectTeam(team);
+            picker.appendChild(btn);
+        });
+    }
+
+    function openPicker(week, idx, type) {
+        editContext = { week, idx, type };
+        document.getElementById('modalTitle').innerText = `Select ${type === 'away' ? 'Away' : 'Home'} Team`;
+        document.getElementById('modalOverlay').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    function selectTeam(team) {
+        if (editContext) {
+            schedule[editContext.week][editContext.idx][editContext.type] = team;
+            renderWeekly();
+            renderMatrix();
+            closeModal();
+        }
+    }
+
+    function addGame() {
+        if (!schedule[currentWeek]) schedule[currentWeek] = [];
+        schedule[currentWeek].push({ away: "???", home: "???" });
+        renderWeekly();
+    }
+
+    function removeGame(idx) {
+        schedule[currentWeek].splice(idx, 1);
+        renderWeekly();
+    }
+
+    function addGameToWeek(w, team) {
+        if (!schedule[w]) schedule[w] = [];
+        schedule[w].push({ away: team, home: "???" });
+        currentWeek = w;
+        renderWeekNav();
+        renderWeekly();
+        switchView('weekly');
+    }
+
+    function copyToClipboard() {
+        updateRawText();
+        const el = document.getElementById('rawText');
+        el.select();
+        document.execCommand('copy');
+        alert("Schedule copied to clipboard!");
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>

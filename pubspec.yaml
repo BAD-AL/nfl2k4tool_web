@@ -1,0 +1,22 @@
+name: nfl2k5tool_web
+description: NFL2K5Tool single-page web app
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.4.0
+
+dependencies:
+  web: ^1.1.0
+  archive: ^3.6.1
+  nfl2k5tool_dart:
+    git:
+      url: https://github.com/BAD-AL/nfl2k5tool_dart.git
+      ref: main
+
+dev_dependencies:
+  webdev: ^3.0.0
+  build_runner: ^2.4.0
+  build_web_compilers: ^4.4.12
+  lints: ^4.0.0
+  test: ^1.25.0
