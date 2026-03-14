@@ -62,9 +62,9 @@ Try it now: https://BAD-AL.github.io/nfl2k5tool_web/
 - Claude Code was used in the creation of this app, check 'Spec' folder for initial prompts.
 
 ## Related projects
-https://github.com/BAD-AL/NFL2K5Tool
-https://github.com/BAD-AL/dart_mymc 
-https://github.com/BAD-AL/xbox_memory_unit_tool
-https://github.com/BAD-AL/nfl2k5tool_dart
+- https://github.com/BAD-AL/NFL2K5Tool
+- https://github.com/BAD-AL/dart_mymc 
+- https://github.com/BAD-AL/xbox_memory_unit_tool
+- https://github.com/BAD-AL/nfl2k5tool_dart
 
 
