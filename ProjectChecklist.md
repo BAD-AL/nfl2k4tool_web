@@ -384,23 +384,22 @@ Each type reads from the current player's CSV line and writes changes via `setFi
 ### 4.4 Editor Area — Line Gutter + Textarea (§12.2)
 - [x] 48px gutter: chip bg, right-aligned monospace line numbers, `--color-muted` 11px
 - [x] Textarea bound to `appState.textContent` (any edit updates `textContent` directly)
-- [x] Wrap off: horizontal scroll + synchronized 12px scrollbar
-- [x] Line numbers stay synchronized
+- [x] Wrap off: horizontal scroll; line numbers stay synchronized
 - [ ] **Verify T-TEXT-01, T-TEXT-02, T-TEXT-03**
 
 ### 4.5 Syntax Highlighting (§12.3)
-- [x] Per-line span injection:
-  - Line 0 (col header `#` row): italic, `--syntax-header`
+- [x] Per-line span injection via transparent-textarea + positioned overlay:
+  - `#` header row: italic, `--syntax-header`
   - `Team =` lines: bold, `--syntax-team`
   - Player rows: field 0 → `--syntax-position`; comma → `--syntax-comma`; fields 1–2 → `--syntax-name`; rest → `--syntax-base`
-- [x] **Performance:** only color visible viewport ± 60 lines
-- [x] Search matches: `--syntax-hit` / `--syntax-active`
+- [ ] **Performance windowing:** only color visible viewport ± 60 lines *(currently renders all lines)*
+- [ ] Search match highlights in overlay (`--syntax-hit` / `--syntax-active`)
 - [ ] **Verify T-TEXT-04 through T-TEXT-06**
 
 ### 4.6 Search (§12.4)
-- [x] Ctrl+F → search input; F3 → next; Shift+F3 → prev
-- [x] All matches highlighted; active match scrolled into view
-- [x] Toolbar shows "N/M"
+- [x] Ctrl+F → inline toolbar search input; F3 / Shift+F3 → next/prev; ESC closes
+- [x] Active match scrolled into view; Find button shows "N/M" count
+- [ ] All matches highlighted in overlay
 - [ ] **Verify T-TEXT-07 through T-TEXT-11**
 
 ### 4.7 Editor Status Bar

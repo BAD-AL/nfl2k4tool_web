@@ -185,16 +185,124 @@ void _loadBytes(Uint8List bytes, String name) {
 
 // ─── Export ───────────────────────────────────────────────────────────────────
 
+// Export format descriptor
+typedef _ExportFmt = ({String label, String ext});
+
+/// Returns the formats this session can be exported to, based on the input
+/// file extension, per the tool's conversion rules.
+List<_ExportFmt> _allowedExportFormats(String fileName) {
+  final n = fileName.toLowerCase();
+  final isXbox = n.endsWith('.zip') || n.endsWith('.bin') || n.endsWith('.img');
+  final isPs2  = n.endsWith('.ps2') || n.endsWith('.max') || n.endsWith('.psu');
+  final isDat  = n.endsWith('.dat');
+
+  if (isXbox) {
+    return [
+      (label: 'Xbox Zip (.zip)',                        ext: '.zip'),
+      (label: 'Xbox Memory Unit (.bin) — new card',     ext: '.bin'),
+      (label: 'Xbox Memory Unit (.img) — new card',     ext: '.img'),
+      (label: 'PS2 Max (.max)',                         ext: '.max'),
+      (label: 'PS2 PSU (.psu)',                         ext: '.psu'),
+      (label: 'PS2 Memory Card (.ps2) — new card',      ext: '.ps2'),
+      (label: 'Raw DAT (.dat)',                         ext: '.dat'),
+    ];
+  } else if (isPs2) {
+    return [
+      (label: 'PS2 Max (.max)',                         ext: '.max'),
+      (label: 'PS2 PSU (.psu)',                         ext: '.psu'),
+      (label: 'PS2 Memory Card (.ps2) — new card',      ext: '.ps2'),
+      (label: 'Raw DAT (.dat)',                         ext: '.dat'),
+    ];
+  } else if (isDat) {
+    return [
+      (label: 'Raw DAT (.dat)',                         ext: '.dat'),
+    ];
+  }
+  return [(label: 'Raw DAT (.dat)', ext: '.dat')];
+}
+
 void _showExportDialog() {
   if (!appState.hasFile) return;
-  // TODO Phase 6: show export format picker dialog.
-  // For now, export back to the same format as the loaded file.
-  _exportAs(appState.fileName ?? 'export');
+
+  final loaded   = appState.fileName ?? 'export';
+  final baseName = loaded.contains('.')
+      ? loaded.substring(0, loaded.lastIndexOf('.'))
+      : loaded;
+  final formats  = _allowedExportFormats(loaded);
+
+  final fmtButtons = formats.map((f) =>
+    '<button class="text-sidebar-btn exp-fmt" data-ext="${f.ext}">${f.label}</button>'
+  ).join('\n');
+
+  final overlay = HTMLDivElement()..className = 'dialog-overlay';
+  overlay.innerHTML = '''
+<div class="dialog" style="max-width:420px;width:90%;">
+  <div class="dialog-header">
+    <span>Export Save</span>
+    <span class="material-symbols-outlined dialog-close" id="exp-close">close</span>
+  </div>
+  <div class="dialog-body" style="padding:16px;">
+    <label style="font-size:12px;color:var(--color-muted);display:block;margin-bottom:6px;">
+      Filename (without extension)
+    </label>
+    <input id="exp-filename" type="text"
+      style="width:100%;background:var(--color-chip);border:1px solid var(--color-border);
+             border-radius:4px;color:var(--color-text);padding:6px 10px;font-size:13px;
+             outline:none;box-sizing:border-box;margin-bottom:16px;"
+      value="${baseName.replaceAll('"', '&quot;')}">
+    <div style="font-size:12px;color:var(--color-muted);margin-bottom:8px;">Format</div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      $fmtButtons
+    </div>
+  </div>
+  <div class="dialog-footer">
+    <button class="btn btn-outlined" id="exp-cancel">Cancel</button>
+  </div>
+</div>'''.toJS;
+
+  document.body!.append(overlay);
+
+  void close() { overlay.remove(); }
+
+  overlay.querySelector('#exp-close')?.addEventListener('click',  (Event _) { close(); }.toJS);
+  overlay.querySelector('#exp-cancel')?.addEventListener('click', (Event _) { close(); }.toJS);
+  overlay.addEventListener('click', (Event e) {
+    if ((e.target as HTMLElement?) == overlay) close();
+  }.toJS);
+  (overlay.firstElementChild as HTMLElement?)
+      ?.addEventListener('click', (Event e) { e.stopPropagation(); }.toJS);
+
+  final fmtBtns = overlay.querySelectorAll('.exp-fmt');
+  for (var i = 0; i < fmtBtns.length; i++) {
+    final btn = fmtBtns.item(i) as HTMLElement;
+    btn.addEventListener('click', (Event _) {
+      final ext       = btn.dataset['ext'];
+      final nameInput = overlay.querySelector('#exp-filename') as HTMLInputElement?;
+      final base      = nameInput?.value.trim();
+      final filename  = '${base != null && base.isNotEmpty ? base : baseName}$ext';
+      close();
+      _exportAs(filename);
+    }.toJS);
+  }
+
+  JSFunction? escFn;
+  escFn = (KeyboardEvent e) {
+    if (e.key == 'Escape') {
+      document.removeEventListener('keydown', escFn!);
+      close();
+    }
+  }.toJS;
+  document.addEventListener('keydown', escFn);
+
+  Future.delayed(Duration.zero, () {
+    (overlay.querySelector('#exp-filename') as HTMLInputElement?)
+      ?..focus()
+      ..select();
+  });
 }
 
 /// Applies text to binary and downloads the file.
-/// [name] is used to determine the output format via extension.
-/// Save to other types will be handled via the export dialog in Phase 6.
+/// [name] must include the extension — the extension determines the format.
 void _exportAs(String name) {
   final session = appState.session;
   final tool = appState.tool;
@@ -213,6 +321,10 @@ void _exportAs(String name) {
       bytes = session.exportToPs2Max();
     } else if (n.endsWith('.psu')) {
       bytes = session.exportToPs2Psu();
+    } else if (n.endsWith('.ps2')) {
+      bytes = session.injectIntoPs2Card();
+    } else if (n.endsWith('.bin') || n.endsWith('.img')) {
+      bytes = session.injectIntoXboxMU();
     } else {
       statusBar.showMessage('Export not supported for this format');
       return;

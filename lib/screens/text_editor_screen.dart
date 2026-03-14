@@ -1,60 +1,121 @@
 import 'dart:js_interop';
 import 'package:web/web.dart';
+import 'package:nfl2k5tool_dart/nfl2k5tool_dart.dart';
 import '../app_state.dart';
 
 class TextEditorScreen {
   final AppState _appState;
   final HTMLElement _container;
 
-  int _fontSize = 13;
-  String _searchTerm = '';
-  List<int> _matchOffsets = [];
-  int _matchIndex = -1;
+  // Persistent UI state
+  int  _fontSize         = 13;
+  bool _sidebarCollapsed = true;   // hidden by default
+  int  _sidebarWidth     = 180;
+  bool _wrapEnabled      = false;
+  bool? _lastHasFile;
 
-  // Search popup state
+  // Search state
+  String    _searchTerm    = '';
+  List<int> _matchOffsets  = [];
+  int       _matchIndex    = -1;
   HTMLElement? _searchOverlay;
-  JSFunction? _searchDocKeyFn;
+  JSFunction?  _searchEscFn;
 
   TextEditorScreen(this._appState)
       : _container =
             document.getElementById('screen-textEditor') as HTMLElement;
 
+  // ─── Entry point ──────────────────────────────────────────────────────────
+
   void render() {
     final area = _container.querySelector('#te-area') as HTMLTextAreaElement?;
-
     if (area != null) {
-      // Already mounted — sync value if it changed externally.
       if (area.value != _appState.textContent) {
         area.value = _appState.textContent;
+        _syncGutter(area);
+        _updateStatus(area);
+        if (_searchTerm.isNotEmpty) { _rerunSearch(); }
+      }
+      if (_lastHasFile != _appState.hasFile) {
+        _lastHasFile = _appState.hasFile;
+        _updateSidebarButtonStates();
       }
       return;
     }
 
+    _lastHasFile = _appState.hasFile;
     _container.innerHTML = _buildHtml().toJS;
     _wire();
   }
 
   // ─── HTML ─────────────────────────────────────────────────────────────────
 
-  String _buildHtml() => '''
+  String _buildHtml() {
+    final dis = _appState.hasFile ? '' : ' disabled';
+    return '''
 <div class="section-header">
   <span class="material-symbols-outlined section-icon">edit_note</span>
   <span class="section-title">Text Editor</span>
-  <span id="te-search-hint" class="section-subtitle"
-    style="font-size:11px;color:var(--color-muted);cursor:pointer;">Ctrl+F to search</span>
   <div class="te-font-ctrl">
     <button id="te-font-dec" class="btn btn-outlined te-font-btn">−</button>
     <span id="te-font-size" class="te-font-label">${_fontSize}px</span>
     <button id="te-font-inc" class="btn btn-outlined te-font-btn">+</button>
   </div>
 </div>
-<div class="te-body">
-  <textarea id="te-area" class="te-area"
-    style="font-size:${_fontSize}px;"
-    spellcheck="false" autocorrect="off" autocapitalize="off"
-  ></textarea>
-</div>
-''';
+<div class="text-editor">
+
+  ${_buildSidebarHtml(dis)}
+
+  <div class="text-editor-column">
+
+    <div class="text-toolbar">
+      <button class="text-toolbar-btn" id="te-find-btn">Ctrl+F</button>
+      <button class="text-toolbar-btn${_wrapEnabled ? ' active' : ''}" id="te-wrap-btn"
+        >Wrap: ${_wrapEnabled ? 'On' : 'Off'}</button>
+    </div>
+
+    <div class="text-body">
+      <div class="text-gutter" id="te-gutter">
+        <div class="text-gutter-inner" id="te-gutter-inner"
+          style="font-size:${_fontSize}px;">${_gutterText(_appState.textContent)}</div>
+      </div>
+      <div class="text-area-wrap">
+        <textarea id="te-area" class="text-area"
+          style="font-size:${_fontSize}px;${_wrapEnabled ? 'white-space:pre-wrap;overflow-wrap:break-word;' : ''}"
+          spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
+      </div>
+    </div>
+
+    <div class="text-status-bar" id="te-status">Ln 1, Col 1   0 lines   0 chars</div>
+  </div>
+</div>''';
+  }
+
+  String _buildSidebarHtml(String dis) {
+    final widthStyle = _sidebarCollapsed
+        ? ''
+        : ' style="position:relative;width:${_sidebarWidth}px;min-width:${_sidebarWidth}px;"';
+    return '''
+<div class="text-advanced-sidebar${_sidebarCollapsed ? ' collapsed' : ''}"
+    id="te-sidebar"$widthStyle>
+  <div class="text-sidebar-header">
+    ${_sidebarCollapsed ? '' : '<span>Advanced</span>'}
+    <span class="material-symbols-outlined" id="te-sidebar-toggle"
+      style="cursor:pointer;font-size:16px;flex-shrink:0;">
+      ${_sidebarCollapsed ? 'chevron_right' : 'chevron_left'}
+    </span>
+  </div>
+  ${_sidebarCollapsed ? '' : '''
+  <button class="text-sidebar-btn" id="te-apply"$dis>Apply to Save</button>
+  <button class="text-sidebar-btn" id="te-list"$dis>List Contents</button>
+  <button class="text-sidebar-btn" id="te-reset-key"$dis>Reset Key</button>
+  <button class="text-sidebar-btn" id="te-auto-fix"$dis>Auto Fix Skin/Face</button>
+  <button class="text-sidebar-btn" id="te-clear">Clear</button>
+  <div id="te-resize"
+    style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;"></div>
+  '''}
+</div>''';
+  }
 
   // ─── Wiring ───────────────────────────────────────────────────────────────
 
@@ -63,15 +124,51 @@ class TextEditorScreen {
     if (area == null) return;
 
     area.value = _appState.textContent;
+    _syncGutter(area);
+    _updateStatus(area);
 
-    // Text editing — update model; re-run search if active.
+    _wireFontControls(area);
+    _wireTextarea(area);
+    _wireSidebarToggleAndResize(area);
+    _wireSidebarButtons(area);
+    _wireToolbar(area);
+  }
+
+  // ─── Font controls ────────────────────────────────────────────────────────
+
+  void _wireFontControls(HTMLTextAreaElement area) {
+    _container.querySelector('#te-font-dec')?.addEventListener('click', (Event _) {
+      if (_fontSize > 8) { _fontSize--; _applyFontSize(area); }
+    }.toJS);
+    _container.querySelector('#te-font-inc')?.addEventListener('click', (Event _) {
+      if (_fontSize < 28) { _fontSize++; _applyFontSize(area); }
+    }.toJS);
+  }
+
+  void _applyFontSize(HTMLTextAreaElement area) {
+    area.style.fontSize = '${_fontSize}px';
+    (_container.querySelector('#te-font-size') as HTMLElement?)?.textContent = '${_fontSize}px';
+    (_container.querySelector('#te-gutter-inner') as HTMLElement?)?.style.fontSize = '${_fontSize}px';
+  }
+
+  // ─── Textarea ─────────────────────────────────────────────────────────────
+
+  void _wireTextarea(HTMLTextAreaElement area) {
     area.addEventListener('input', (Event _) {
       _appState.textContent = area.value;
       _appState.refreshCounts();
-      if (_searchTerm.isNotEmpty) _rerunSearch(area);
+      _syncGutter(area);
+      _updateStatus(area);
+      if (_searchTerm.isNotEmpty) _rerunSearch();
     }.toJS);
 
-    // Ctrl+F → open search popup; F3/Shift+F3 → navigate matches.
+    area.addEventListener('click', (Event _) { _updateStatus(area); }.toJS);
+    area.addEventListener('keyup',  (Event _) { _updateStatus(area); }.toJS);
+
+    area.addEventListener('scroll', (Event _) {
+      (_container.querySelector('#te-gutter') as HTMLElement?)?.scrollTop = area.scrollTop;
+    }.toJS);
+
     area.addEventListener('keydown', (Event e) {
       final ke = e as KeyboardEvent;
       if (ke.ctrlKey && ke.key == 'f') {
@@ -81,30 +178,171 @@ class TextEditorScreen {
       }
       if (ke.key == 'F3') {
         e.preventDefault();
-        if (ke.shiftKey) { _prevMatch(area); } else { _nextMatch(area); }
+        ke.shiftKey ? _prevMatch(area) : _nextMatch(area);
       }
-    }.toJS);
-
-    // Search hint click.
-    _container.querySelector('#te-search-hint')?.addEventListener('click', (Event _) {
-      _openSearchPopup(area);
-    }.toJS);
-
-    // Font − / + buttons.
-    _container.querySelector('#te-font-dec')?.addEventListener('click', (Event _) {
-      if (_fontSize > 8) { _fontSize--; _applyFontSize(area); }
-    }.toJS);
-    _container.querySelector('#te-font-inc')?.addEventListener('click', (Event _) {
-      if (_fontSize < 28) { _fontSize++; _applyFontSize(area); }
     }.toJS);
   }
 
-  // ─── Font size ────────────────────────────────────────────────────────────
+  // ─── Toolbar ──────────────────────────────────────────────────────────────
 
-  void _applyFontSize(HTMLTextAreaElement area) {
-    area.style.fontSize = '${_fontSize}px';
-    final label = _container.querySelector('#te-font-size') as HTMLElement?;
-    if (label != null) label.textContent = '${_fontSize}px';
+  void _wireToolbar(HTMLTextAreaElement area) {
+    _container.querySelector('#te-find-btn')?.addEventListener('click', (Event _) {
+      _openSearchPopup(area);
+    }.toJS);
+
+    _container.querySelector('#te-wrap-btn')?.addEventListener('click', (Event _) {
+      _wrapEnabled = !_wrapEnabled;
+      if (_wrapEnabled) {
+        area.style.whiteSpace   = 'pre-wrap';
+        area.style.overflowWrap = 'break-word';
+      } else {
+        area.style.whiteSpace   = 'pre';
+        area.style.overflowWrap = 'normal';
+      }
+      final btn = _container.querySelector('#te-wrap-btn') as HTMLElement?;
+      btn?.classList.toggle('active', _wrapEnabled);
+      if (btn != null) btn.textContent = 'Wrap: ${_wrapEnabled ? 'On' : 'Off'}';
+    }.toJS);
+  }
+
+  // ─── Sidebar ──────────────────────────────────────────────────────────────
+
+  void _wireSidebarToggleAndResize(HTMLTextAreaElement area) {
+    _container.querySelector('#te-sidebar-toggle')?.addEventListener('click', (Event _) {
+      _sidebarCollapsed = !_sidebarCollapsed;
+      _rebuildSidebar(area);
+    }.toJS);
+    _attachResizeHandle(area);
+  }
+
+  void _attachResizeHandle(HTMLTextAreaElement area) {
+    final handle  = _container.querySelector('#te-resize')  as HTMLElement?;
+    final sidebar = _container.querySelector('#te-sidebar') as HTMLElement?;
+    if (handle == null || sidebar == null) return;
+
+    handle.addEventListener('mousedown', (Event e) {
+      final startX = (e as MouseEvent).clientX;
+      final startW = _sidebarWidth;
+      sidebar.style.transition = 'none';
+      late final JSFunction onMove, onUp;
+      onMove = (Event ev) {
+        final dx = (ev as MouseEvent).clientX - startX;
+        _sidebarWidth = (startW + dx).clamp(120, 400).toInt();
+        sidebar.style.width    = '${_sidebarWidth}px';
+        sidebar.style.minWidth = '${_sidebarWidth}px';
+      }.toJS;
+      onUp = (Event _) {
+        sidebar.style.transition = '';
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup',  onUp);
+      }.toJS;
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup',  onUp);
+    }.toJS);
+  }
+
+  void _rebuildSidebar(HTMLTextAreaElement area) {
+    final sidebar = _container.querySelector('#te-sidebar') as HTMLElement?;
+    if (sidebar == null) return;
+
+    if (_sidebarCollapsed) {
+      sidebar.classList.add('collapsed');
+      sidebar.style.removeProperty('width');
+      sidebar.style.removeProperty('min-width');
+    } else {
+      sidebar.classList.remove('collapsed');
+      sidebar.style.width    = '${_sidebarWidth}px';
+      sidebar.style.minWidth = '${_sidebarWidth}px';
+      sidebar.style.position = 'relative';
+    }
+
+    final dis = _appState.hasFile ? '' : ' disabled';
+    sidebar.innerHTML = '''
+<div class="text-sidebar-header">
+  ${_sidebarCollapsed ? '' : '<span>Advanced</span>'}
+  <span class="material-symbols-outlined" id="te-sidebar-toggle"
+    style="cursor:pointer;font-size:16px;flex-shrink:0;">
+    ${_sidebarCollapsed ? 'chevron_right' : 'chevron_left'}
+  </span>
+</div>
+${_sidebarCollapsed ? '' : '''
+<button class="text-sidebar-btn" id="te-apply"$dis>Apply to Save</button>
+<button class="text-sidebar-btn" id="te-list"$dis>List Contents</button>
+<button class="text-sidebar-btn" id="te-reset-key"$dis>Reset Key</button>
+<button class="text-sidebar-btn" id="te-auto-fix"$dis>Auto Fix Skin/Face</button>
+<button class="text-sidebar-btn" id="te-clear">Clear</button>
+<div id="te-resize"
+  style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;"></div>
+'''}'''.toJS;
+
+    sidebar.querySelector('#te-sidebar-toggle')?.addEventListener('click', (Event _) {
+      _sidebarCollapsed = !_sidebarCollapsed;
+      _rebuildSidebar(area);
+    }.toJS);
+    if (!_sidebarCollapsed) {
+      _wireSidebarButtons(area);
+      _attachResizeHandle(area);
+    }
+  }
+
+  void _wireSidebarButtons(HTMLTextAreaElement area) {
+    _container.querySelector('#te-apply')?.addEventListener('click',
+        (Event _) { _applyToSave(); }.toJS);
+    _container.querySelector('#te-list')?.addEventListener('click',
+        (Event _) { _listContents(area); }.toJS);
+    _container.querySelector('#te-reset-key')?.addEventListener('click',
+        (Event _) { _doProcessText('Key=', 'Key reset'); }.toJS);
+    _container.querySelector('#te-auto-fix')?.addEventListener('click',
+        (Event _) { _doProcessText('AutoFixSkinFromPhoto', 'Auto fix applied'); }.toJS);
+    _container.querySelector('#te-clear')?.addEventListener('click', (Event _) {
+      _appState.textContent = '';
+      area.value = '';
+      _appState.refreshCounts();
+      _syncGutter(area);
+      _updateStatus(area);
+      _appState.notify();
+    }.toJS);
+  }
+
+  void _updateSidebarButtonStates() {
+    final hasFile = _appState.hasFile;
+    for (final id in ['te-apply', 'te-list', 'te-reset-key', 'te-auto-fix']) {
+      final btn = _container.querySelector('#$id') as HTMLButtonElement?;
+      if (btn != null) btn.disabled = !hasFile;
+    }
+  }
+
+  // ─── Gutter ───────────────────────────────────────────────────────────────
+
+  String _gutterText(String text) {
+    final n = text.isEmpty ? 1 : '\n'.allMatches(text).length + 1;
+    return List.generate(n, (i) => (i + 1).toString()).join('\n');
+  }
+
+  void _syncGutter(HTMLTextAreaElement area) {
+    (_container.querySelector('#te-gutter-inner') as HTMLElement?)?.textContent =
+        _gutterText(area.value);
+  }
+
+  // ─── Status bar ───────────────────────────────────────────────────────────
+
+  void _updateStatus(HTMLTextAreaElement area) {
+    final status = _container.querySelector('#te-status') as HTMLElement?;
+    if (status == null) return;
+    final text   = area.value;
+    final sel    = area.selectionStart;
+    final before = text.substring(0, sel).split('\n');
+    final ln     = before.length;
+    final col    = before.last.length + 1;
+    final totalLines = text.isEmpty ? 0 : text.split('\n').length;
+    final chars  = text.length;
+    var s = 'Ln $ln, Col $col   $totalLines lines   $chars chars';
+    if (_searchTerm.isNotEmpty) {
+      s += _matchOffsets.isNotEmpty
+          ? '   •   ${_matchIndex + 1}/${_matchOffsets.length} matches'
+          : '   •   0 matches';
+    }
+    status.textContent = s;
   }
 
   // ─── Search popup ─────────────────────────────────────────────────────────
@@ -112,8 +350,8 @@ class TextEditorScreen {
   void _openSearchPopup(HTMLTextAreaElement area) {
     if (_searchOverlay != null) return;
 
-    final overlay = document.createElement('div') as HTMLElement;
-    overlay.className = 'dialog-overlay';
+    final overlay = document.createElement('div') as HTMLElement
+      ..className = 'dialog-overlay';
     overlay.innerHTML = '''
 <div class="dialog te-search-dialog">
   <div class="dialog-header">
@@ -132,46 +370,43 @@ class TextEditorScreen {
     <button class="btn btn-filled" id="te-search-ok">OK</button>
   </div>
 </div>'''.toJS;
-
     document.body!.append(overlay);
     _searchOverlay = overlay;
 
     final input = overlay.querySelector('#te-search-input') as HTMLInputElement?;
     if (input != null) {
-      input.value = _searchTerm; // pre-fill with last search term
+      input.value = _searchTerm;
       Future.delayed(Duration.zero, () { input.focus(); input.select(); });
     }
 
     void close(bool confirm) {
-      final fn = _searchDocKeyFn;
+      final fn = _searchEscFn;
       if (fn != null) document.removeEventListener('keydown', fn);
-      _searchDocKeyFn = null;
+      _searchEscFn = null;
       _searchOverlay?.remove();
       _searchOverlay = null;
 
       if (confirm) {
         _searchTerm = input?.value ?? '';
         _runSearch();
-        if (_matchOffsets.isNotEmpty) {
-          _jumpTo(area, 0);
-        } else {
-          area.focus();
-        }
+        _updateStatus(area);
+        if (_matchOffsets.isNotEmpty) _jumpTo(area, 0);
       } else {
-        _searchTerm = '';
+        _searchTerm   = '';
         _matchOffsets = [];
-        _matchIndex = -1;
-        area.focus();
+        _matchIndex   = -1;
+        _updateStatus(area);
       }
+      area.focus();
     }
 
     // ESC → cancel
-    late final JSFunction docKeyFn;
-    docKeyFn = (Event e) {
+    late final JSFunction escFn;
+    escFn = (Event e) {
       if ((e as KeyboardEvent).key == 'Escape') close(false);
     }.toJS;
-    document.addEventListener('keydown', docKeyFn);
-    _searchDocKeyFn = docKeyFn;
+    document.addEventListener('keydown', escFn);
+    _searchEscFn = escFn;
 
     // Backdrop click → cancel
     overlay.addEventListener('click', (Event e) {
@@ -180,27 +415,15 @@ class TextEditorScreen {
     (overlay.firstElementChild as HTMLElement?)
         ?.addEventListener('click', (Event e) { e.stopPropagation(); }.toJS);
 
-    // Cancel / X buttons
-    final cancelBtn = overlay.querySelector('#te-search-cancel') as HTMLElement?;
-    cancelBtn?.addEventListener('click', (Event e) {
-      e.stopPropagation();
-      close(false);
-    }.toJS);
     overlay.querySelector('.dialog-close')
-        ?.addEventListener('click', (Event _) { cancelBtn?.click(); }.toJS);
+        ?.addEventListener('click', (Event _) { close(false); }.toJS);
+    overlay.querySelector('#te-search-cancel')
+        ?.addEventListener('click', (Event e) { e.stopPropagation(); close(false); }.toJS);
+    overlay.querySelector('#te-search-ok')
+        ?.addEventListener('click', (Event e) { e.stopPropagation(); close(true); }.toJS);
 
-    // OK button
-    overlay.querySelector('#te-search-ok')?.addEventListener('click', (Event e) {
-      e.stopPropagation();
-      close(true);
-    }.toJS);
-
-    // Enter in input → OK
     input?.addEventListener('keydown', (Event e) {
-      if ((e as KeyboardEvent).key == 'Enter') {
-        e.preventDefault();
-        close(true);
-      }
+      if ((e as KeyboardEvent).key == 'Enter') { e.preventDefault(); close(true); }
     }.toJS);
   }
 
@@ -208,7 +431,7 @@ class TextEditorScreen {
 
   void _runSearch() {
     _matchOffsets = [];
-    _matchIndex = -1;
+    _matchIndex   = -1;
     if (_searchTerm.isEmpty) return;
     final text = _appState.textContent.toLowerCase();
     final term = _searchTerm.toLowerCase();
@@ -221,8 +444,7 @@ class TextEditorScreen {
     }
   }
 
-  /// Re-runs search after a text edit, keeping the current match index stable.
-  void _rerunSearch(HTMLTextAreaElement area) {
+  void _rerunSearch() {
     final prev = _matchIndex;
     _runSearch();
     if (_matchOffsets.isNotEmpty) {
@@ -234,10 +456,14 @@ class TextEditorScreen {
     if (_matchOffsets.isEmpty) return;
     _matchIndex = index.clamp(0, _matchOffsets.length - 1);
     final start = _matchOffsets[_matchIndex];
-    final end = start + _searchTerm.length;
     area.focus();
-    area.setSelectionRange(start, end);
-    _scrollToOffset(area, start);
+    area.setSelectionRange(start, start + _searchTerm.length);
+    final linesBefore  = '\n'.allMatches(area.value.substring(0, start)).length;
+    final lineHeightPx = _fontSize * 1.5;
+    area.scrollTop =
+        (linesBefore * lineHeightPx - area.clientHeight / 2 + lineHeightPx)
+            .clamp(0, double.infinity);
+    _updateStatus(area);
   }
 
   void _nextMatch(HTMLTextAreaElement area) {
@@ -250,11 +476,86 @@ class TextEditorScreen {
     _jumpTo(area, (_matchIndex - 1 + _matchOffsets.length) % _matchOffsets.length);
   }
 
-  /// Scrolls the textarea so the match at [offset] is vertically centred.
-  void _scrollToOffset(HTMLTextAreaElement area, int offset) {
-    final linesBefore = '\n'.allMatches(area.value.substring(0, offset)).length;
-    final lineHeightPx = _fontSize * 1.5;
-    final target = linesBefore * lineHeightPx - area.clientHeight / 2 + lineHeightPx;
-    area.scrollTop = target.clamp(0, double.infinity);
+  // ─── Sidebar actions ──────────────────────────────────────────────────────
+
+  void _applyToSave() {
+    final tool = _appState.tool;
+    if (tool == null) return;
+    StaticUtils.Errors.clear();
+    InputParser(tool).ProcessText(_appState.textContent);
+    final result = StaticUtils.Errors.isEmpty
+        ? 'Done — no errors.'
+        : StaticUtils.Errors.join('\n');
+    _showFeedbackModal(result);
   }
+
+  void _listContents(HTMLTextAreaElement area) {
+    final tool = _appState.tool;
+    if (tool == null) return;
+    _appState.textContent =
+        _appState.buildTextContent(tool, _appState.options);
+    area.value = _appState.textContent;
+    _appState.refreshCounts();
+    _syncGutter(area);
+    _updateStatus(area);
+    _appState.notify();
+  }
+
+  void _doProcessText(String command, String successPrefix) {
+    final tool = _appState.tool;
+    if (tool == null) return;
+    StaticUtils.Errors.clear();
+    InputParser(tool).ProcessText(command);
+    final result = StaticUtils.Errors.isEmpty
+        ? '$successPrefix — no errors.'
+        : StaticUtils.Errors.join('\n');
+    _showFeedbackModal(result);
+  }
+
+  // ─── Feedback modal ───────────────────────────────────────────────────────
+
+  void _showFeedbackModal(String text) {
+    final overlay = document.createElement('div') as HTMLElement
+      ..className = 'dialog-overlay';
+    overlay.innerHTML = '''
+<div class="dialog" style="max-width:600px;width:90%;max-height:80vh;">
+  <div class="dialog-header">
+    <span>Result</span>
+    <span class="material-symbols-outlined dialog-close" id="te-modal-x">close</span>
+  </div>
+  <div class="dialog-body">
+    <pre style="margin:0;font-size:12px;white-space:pre-wrap;word-break:break-word;
+      color:var(--color-text);">${_esc(text)}</pre>
+  </div>
+  <div class="dialog-footer">
+    <button class="btn btn-outlined" id="te-modal-copy">Copy to Clipboard</button>
+    <button class="btn btn-filled" id="te-modal-close">Close</button>
+  </div>
+</div>'''.toJS;
+    document.body!.append(overlay);
+
+    void close() { overlay.remove(); }
+    overlay.querySelector('#te-modal-x')?.addEventListener('click', (Event _) { close(); }.toJS);
+    overlay.querySelector('#te-modal-close')?.addEventListener('click', (Event _) { close(); }.toJS);
+    overlay.querySelector('#te-modal-copy')?.addEventListener('click', (Event _) {
+      window.navigator.clipboard.writeText(text);
+    }.toJS);
+
+    JSFunction? escFn;
+    escFn = (KeyboardEvent e) {
+      if (e.key == 'Escape') {
+        document.removeEventListener('keydown', escFn!);
+        close();
+      }
+    }.toJS;
+    document.addEventListener('keydown', escFn);
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────────────────
+
+  static String _esc(String s) => s
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;');
 }

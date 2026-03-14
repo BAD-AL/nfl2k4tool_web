@@ -100,6 +100,9 @@ class PlayerEditorScreen {
       _columns    = parseActiveColumns(_appState.textContent);
       _teamBlocks = parseTeamBlocksForDisplay(_appState.textContent);
       _colleges   = parseCollegeNames(_appState.textContent);
+      // Clear stale selection — line indices are no longer meaningful
+      _selectedLineIndex = -1;
+      _selectedFields    = {};
     }
 
     _renderFull();
@@ -459,9 +462,11 @@ ${_buildAttrTabBarHtml()}
     panel.querySelector('#pes-team-select')?.addEventListener(
         'change',
         (Event e) {
-          _selectedTeam =
-              ((e.target as HTMLSelectElement).value);
+          _selectedTeam      = (e.target as HTMLSelectElement).value;
+          _selectedLineIndex = -1;
+          _selectedFields    = {};
           _rebuildList();
+          _rebuildAttrPanel();
         }.toJS);
 
     // Search input
@@ -843,6 +848,14 @@ ${_buildAttrTabBarHtml()}
         tab.classList.remove('active');
       }
     }
+  }
+
+  void _rebuildAttrPanel() {
+    final attrPanel =
+        _container.querySelector('#pes-attr-panel') as HTMLElement?;
+    if (attrPanel == null) return;
+    attrPanel.innerHTML = _buildAttrPanelHtml().toJS;
+    _attachAttrPanelListeners();
   }
 
   void _rebuildAttrGrid() {
