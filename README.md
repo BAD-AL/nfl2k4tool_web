@@ -60,6 +60,7 @@ Try it now: https://BAD-AL.github.io/nfl2k5tool_web/
 - No data is sent to any server — everything runs locally in the browser.
 - The 'Dart' programming language was chosen because of it's modern Object-Oriented design and it's versatility. Dart can be used as a scripting language, compiled to an executable file [Windows, Linux, Mac, iOS, Android], or run in a web browser (compiled to WASM or JavaScript).
 - Claude Code was used in the creation of this app, check 'Spec' folder for initial prompts.
+- For local / offline use check out the `docs/` folder
 
 ## Related projects
 - https://github.com/BAD-AL/NFL2K5Tool
