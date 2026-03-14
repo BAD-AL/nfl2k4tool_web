@@ -84,3 +84,14 @@ Should exit with 0 errors. The one known `info` about `PlayerDataFile.dart` nami
 | Blank page / JS error | Check browser console; check `webdev serve` terminal for compile errors |
 | `dart pub get` fails on `nfl2k5tool_dart` | Needs internet to clone the git dependency |
 | Hot reload didn't pick up a change | Hard refresh in browser (`Ctrl+Shift+R`); occasionally `webdev serve` needs a restart |
+
+
+---
+## Github Notes
+--- 
+Setup docs/ folder (GitHub pages):
+  1. Run webdev build
+  2. Copy build/web/ contents → docs/ in your repo root
+  3. Push to main
+  4. In repo Settings → Pages → set source to "main branch / docs folder"
+  5. Browse to: https://BAD-AL.github.io/nfl2k5tool_web/

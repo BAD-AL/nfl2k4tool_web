@@ -2,9 +2,9 @@
 
 A browser-based editor for NFL 2K5 gamesave files. Load a save, edit players, schedules, and coaches, then export back to your console format — no installation required.
 
-![NFL2K5Tool Web](web/NFL2K5_image.webp)
+![NFL2K5Tool Web](nfl2k5tool_web.png)
 
-[https://BAD-AL.github.io/nfl2k5tool_web/](https://BAD-AL.github.io/nfl2k5tool_web/)
+Try it now: https://BAD-AL.github.io/nfl2k5tool_web/
 
 ---
 
@@ -57,13 +57,14 @@ A browser-based editor for NFL 2K5 gamesave files. Load a save, edit players, sc
 
 ## Notes
 
-- No data is sent to any server — everything runs locally in the browser
-- The full player face photo library is embedded in the app (~19 MB total)
+- No data is sent to any server — everything runs locally in the browser.
+- The 'Dart' programming language was chosen because of it's modern Object-Oriented design and it's versatility. Dart can be used as a scripting language, compiled to an executable file [Windows, Linux, Mac, iOS, Android], or run in a web browser (compiled to WASM or JavaScript).
+- Claude Code was used in the creation of this app, check 'Spec' folder for initial prompts.
+
+## Related projects
+https://github.com/BAD-AL/NFL2K5Tool
+https://github.com/BAD-AL/dart_mymc 
+https://github.com/BAD-AL/xbox_memory_unit_tool
+https://github.com/BAD-AL/nfl2k5tool_dart
 
 
-Setup docs/ folder (GitHub pages):
-  1. Run webdev build
-  2. Copy build/web/ contents → docs/ in your repo root
-  3. Push to main
-  4. In repo Settings → Pages → set source to "main branch / docs folder"
-  5. Browse to: https://BAD-AL.github.io/nfl2k5tool_web/
