@@ -2,7 +2,7 @@ import 'package:nfl2k5tool_dart/nfl2k5tool_dart.dart';
 import 'data/app_options.dart';
 import 'data/text_parser.dart';
 
-enum NavSection { options, players, schedule, coaches, textEditor }
+enum NavSection { options, players, schedule, coaches, teamData, textEditor }
 
 class AppState {
   // File state
@@ -62,7 +62,11 @@ class AppState {
       buf.write(t.GetTeamPlayers(
           'DraftClass', opts.showAttributes, opts.showAppearance, false));
     }
-    if (opts.showCoaches) buf.write(t.GetCoachDataAll());
+    if (opts.showCoaches) {
+      t.CoachKey = t.CoachKeyAll; // always use full key
+      buf.write(t.GetCoachDataAll());
+    }
+    if (opts.showTeamData) buf.write(t.GetTeamDataAll());
     if (opts.showSchedule && t.saveType == SaveType.Franchise) {
       buf.write('\n\n#Schedule\n');
       buf.write(t.GetSchedule());

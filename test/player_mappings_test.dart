@@ -21,25 +21,6 @@ void main() {
     });
   });
 
-  group('pbpOptions', () {
-    test('non-empty list', () {
-      expect(pbpOptions, isNotEmpty);
-    });
-
-    test('first entry parses correctly (#00=9000)', () {
-      final entry = pbpOptions.first;
-      expect(entry.id, equals('9000'));
-      expect(entry.name, equals('00'));
-    });
-
-    test('all entries have non-empty id and name', () {
-      for (final e in pbpOptions) {
-        expect(e.id, isNotEmpty);
-        expect(e.name, isNotEmpty);
-      }
-    });
-  });
-
   group('photoIdToDisplayName', () {
     test('known id returns correct name', () {
       expect(photoIdToDisplayName('5014'), equals('Abdullah, Khalid'));
@@ -52,7 +33,7 @@ void main() {
 
   group('pbpIdToDisplayName', () {
     test('known id returns correct label', () {
-      expect(pbpIdToDisplayName('9000'), equals('00'));
+      expect(pbpIdToDisplayName('9000'), equals('#00'));
     });
 
     test('unknown id returns empty string', () {

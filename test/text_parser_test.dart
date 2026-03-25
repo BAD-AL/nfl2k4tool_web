@@ -270,6 +270,239 @@ void main() {
     });
   });
 
+  // ── parseCoachLines ───────────────────────────────────────────────────────
+
+  group('parseCoachLines', () {
+    const sampleText = 'CoachKEY=Coach,Team,FirstName,LastName,Body,Photo,Info1\n'
+        'Coach,49ers,Dennis,Erickson,[Dennis Erickson],101,Offensive guru\n'
+        'Coach,Bears,Lovie,Smith,[Lovie Smith],202,Defensive mind\n';
+
+    test('parses header columns from CoachKEY= line', () {
+      final result = parseCoachLines(sampleText);
+      expect(result.headers,
+          ['Coach', 'Team', 'FirstName', 'LastName', 'Body', 'Photo', 'Info1']);
+    });
+
+    test('parses correct number of coach rows', () {
+      expect(parseCoachLines(sampleText).coaches.length, 2);
+    });
+
+    test('coach field getters return correct values', () {
+      final c = parseCoachLines(sampleText).coaches[0];
+      expect(c.team, '49ers');
+      expect(c.firstName, 'Dennis');
+      expect(c.lastName, 'Erickson');
+      expect(c.body, '[Dennis Erickson]');
+      expect(c.photo, '101');
+    });
+
+    test('fullName concatenates firstName and lastName', () {
+      final c = parseCoachLines(sampleText).coaches[0];
+      expect(c.fullName, 'Dennis Erickson');
+    });
+
+    test('lineIndex points to correct line', () {
+      final coaches = parseCoachLines(sampleText).coaches;
+      // Line 0: header, Line 1: 49ers, Line 2: Bears
+      expect(coaches[0].lineIndex, 1);
+      expect(coaches[1].lineIndex, 2);
+    });
+
+    test('bracketed Body field is preserved verbatim', () {
+      final c = parseCoachLines(sampleText).coaches[1];
+      expect(c.body, '[Lovie Smith]');
+    });
+
+    test('returns empty lists when no CoachKEY= line present', () {
+      final result = parseCoachLines('# no coach data here\nsome,other,line\n');
+      expect(result.headers, isEmpty);
+      expect(result.coaches, isEmpty);
+    });
+
+    test('CoachKEY= match is case-insensitive', () {
+      const text = 'coachkey=Coach,Team,FirstName\nCoach,Browns,Romeo\n';
+      final result = parseCoachLines(text);
+      expect(result.headers, isNotEmpty);
+      expect(result.coaches.length, 1);
+    });
+
+    test('non-Coach data lines between coach rows are ignored', () {
+      const text = 'CoachKEY=Coach,Team,FirstName,LastName\n'
+          '# a comment\n'
+          'Team = Bears    Players:53\n'
+          'Coach,Bears,Lovie,Smith\n';
+      final coaches = parseCoachLines(text).coaches;
+      expect(coaches.length, 1);
+      expect(coaches[0].lineIndex, 3);
+    });
+  });
+
+  // ── parseTeamDataLines ────────────────────────────────────────────────────
+
+  group('parseTeamDataLines', () {
+    const sampleText =
+        'TeamDataKey=TeamData,Team,Nickname,Abbrev,City,AbbrAlt,Stadium,Playbook,DefaultJersey,Logo\n'
+        'TeamData,49ers,Niners,SF,San Francisco,SFO,[San Francisco Park],PB_49ers,0,5\n'
+        'TeamData,Bears,Bears,CHI,Chicago,CHI,[Chicago Field],PB_Bears,1,10\n';
+
+    test('parses header columns from TeamDataKey= line', () {
+      final result = parseTeamDataLines(sampleText);
+      expect(result.headers, contains('Team'));
+      expect(result.headers, contains('Stadium'));
+      expect(result.headers, contains('Playbook'));
+    });
+
+    test('parses correct number of team rows', () {
+      expect(parseTeamDataLines(sampleText).teams.length, 2);
+    });
+
+    test('team field getters return correct values', () {
+      final t = parseTeamDataLines(sampleText).teams[0];
+      expect(t.team, '49ers');
+      expect(t.nickname, 'Niners');
+      expect(t.abbrev, 'SF');
+      expect(t.city, 'San Francisco');
+      expect(t.abbrAlt, 'SFO');
+      expect(t.playbook, 'PB_49ers');
+      expect(t.defaultJersey, '0');
+      expect(t.logo, '5');
+    });
+
+    test('bracketed Stadium field is preserved verbatim', () {
+      final t = parseTeamDataLines(sampleText).teams[0];
+      expect(t.stadium, '[San Francisco Park]');
+    });
+
+    test('lineIndex points to correct line', () {
+      final teams = parseTeamDataLines(sampleText).teams;
+      // Line 0: header, Line 1: 49ers, Line 2: Bears
+      expect(teams[0].lineIndex, 1);
+      expect(teams[1].lineIndex, 2);
+    });
+
+    test('returns empty lists when no TeamDataKey= line present', () {
+      final result = parseTeamDataLines('# no team data\nsome,line\n');
+      expect(result.headers, isEmpty);
+      expect(result.teams, isEmpty);
+    });
+
+    test('TeamDataKey= match is case-insensitive', () {
+      const text = 'teamdatakey=TeamData,Team,Nickname\nTeamData,Cowboys,Cowboys\n';
+      final result = parseTeamDataLines(text);
+      expect(result.headers, isNotEmpty);
+      expect(result.teams.length, 1);
+    });
+  });
+
+  // ── coachStringBytesUsed ──────────────────────────────────────────────────
+
+  group('coachStringBytesUsed', () {
+    const headers = ['Coach', 'Team', 'FirstName', 'LastName', 'Body', 'Photo',
+        'Info1', 'Info2', 'Info3'];
+
+    CoachRow _makeCoach(Map<String, String> fields) =>
+        CoachRow(lineIndex: 0, fields: fields);
+
+    test('empty string costs 2 bytes (null terminator only)', () {
+      final coach = _makeCoach({'FirstName': '', 'LastName': '', 'Info1': '', 'Info2': '', 'Info3': ''});
+      // 5 fields × (0+1)×2 = 10
+      expect(coachStringBytesUsed([coach], headers), 10);
+    });
+
+    test('"Dennis" costs 14 bytes', () {
+      // (6+1)*2 = 14
+      final coach = _makeCoach({'FirstName': 'Dennis', 'LastName': '', 'Info1': '', 'Info2': '', 'Info3': ''});
+      expect(coachStringBytesUsed([coach], headers), 14 + 2 + 2 + 2 + 2);
+    });
+
+    test('single coach with known strings totals correctly', () {
+      // "Dennis"=7, "Erickson"=9, "Info A"=7, ""=1, ""=1  → ×2 = 50
+      final coach = _makeCoach({
+        'FirstName': 'Dennis',   // (6+1)*2 = 14
+        'LastName': 'Erickson',  // (8+1)*2 = 18
+        'Info1': 'Info A',       // (6+1)*2 = 14
+        'Info2': '',             // (0+1)*2 = 2
+        'Info3': '',             // (0+1)*2 = 2
+      });
+      expect(coachStringBytesUsed([coach], headers), 14 + 18 + 14 + 2 + 2);
+    });
+
+    test('two coaches sum their bytes', () {
+      final c1 = _makeCoach({'FirstName': 'A', 'LastName': 'B', 'Info1': '', 'Info2': '', 'Info3': ''});
+      final c2 = _makeCoach({'FirstName': 'C', 'LastName': 'D', 'Info1': '', 'Info2': '', 'Info3': ''});
+      // each: (1+1)*2 + (1+1)*2 + 2+2+2 = 4+4+6 = 14; two coaches = 28
+      expect(coachStringBytesUsed([c1, c2], headers), 28);
+    });
+
+    test('fields absent from headers are not counted', () {
+      // headers without Info2 and Info3
+      const narrowHeaders = ['Coach', 'Team', 'FirstName', 'LastName', 'Body', 'Photo', 'Info1'];
+      final coach = _makeCoach({
+        'FirstName': 'X',  // (1+1)*2 = 4
+        'LastName': 'Y',   // (1+1)*2 = 4
+        'Info1': 'Z',      // (1+1)*2 = 4
+        'Info2': 'AAAA',   // not in headers — excluded
+        'Info3': 'BBBB',   // not in headers — excluded
+      });
+      expect(coachStringBytesUsed([coach], narrowHeaders), 4 + 4 + 4);
+    });
+
+    test('empty coach list returns 0', () {
+      expect(coachStringBytesUsed([], headers), 0);
+    });
+  });
+
+  // ── kCoachStringBudget ────────────────────────────────────────────────────
+
+  group('kCoachStringBudget', () {
+    test('equals 5297 (0x14B1)', () {
+      expect(kCoachStringBudget, 5297);
+      expect(kCoachStringBudget, 0x14b1);
+    });
+  });
+
+  // ── kCoachStringCharBudget ────────────────────────────────────────────────
+
+  group('kCoachStringCharBudget', () {
+    test('equals half of kCoachStringBudget (2648)', () {
+      expect(kCoachStringCharBudget, 2648);
+      expect(kCoachStringCharBudget, kCoachStringBudget ~/ 2);
+    });
+  });
+
+  // ── coachStringCharsUsed ──────────────────────────────────────────────────
+
+  group('coachStringCharsUsed', () {
+    const headers = ['Coach', 'Team', 'FirstName', 'LastName', 'Body', 'Photo',
+        'Info1', 'Info2', 'Info3'];
+
+    CoachRow makeCoach(Map<String, String> fields) =>
+        CoachRow(lineIndex: 0, fields: fields);
+
+    test('equals coachStringBytesUsed divided by 2', () {
+      final coach = makeCoach({'FirstName': 'Dennis', 'LastName': 'Erickson',
+          'Info1': '', 'Info2': '', 'Info3': ''});
+      expect(coachStringCharsUsed([coach], headers),
+          coachStringBytesUsed([coach], headers) ~/ 2);
+    });
+
+    test('empty strings: 5 null terminators = 5 chars', () {
+      final coach = makeCoach({'FirstName': '', 'LastName': '', 'Info1': '', 'Info2': '', 'Info3': ''});
+      // bytes: 5 × (0+1)×2 = 10 → chars: 10÷2 = 5
+      expect(coachStringCharsUsed([coach], headers), 5);
+    });
+
+    test('"Dennis" (6 chars) costs 7 chars (6 + null terminator)', () {
+      final coach = makeCoach({'FirstName': 'Dennis', 'LastName': '', 'Info1': '', 'Info2': '', 'Info3': ''});
+      // FirstName: (6+1)×2=14 bytes → 7 chars; others: 1 each → 4 chars; total=11
+      expect(coachStringCharsUsed([coach], headers), 11);
+    });
+
+    test('empty list returns 0', () {
+      expect(coachStringCharsUsed([], headers), 0);
+    });
+  });
+
   // ── Real file integration ─────────────────────────────────────────────────
 
   group('Real file: Base2004Fran_Orig', () {

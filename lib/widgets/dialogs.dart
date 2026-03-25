@@ -325,6 +325,111 @@ class _VirtualFaceGrid {
   }
 }
 
+// ─── Coach Body Picker Dialog ─────────────────────────────────────────────────
+
+/// Shows a simple grid of the 34 coach body images.
+/// [currentName] is the currently selected body name, e.g. `[Dennis Erickson]`.
+/// [onPicked] receives the selected name (with brackets).
+class CoachBodyPickerDialog {
+  HTMLElement? _overlay;
+  String? _selectedName;
+  JSFunction? _escFn;
+
+  void open({
+    required String? currentName,
+    required void Function(String name) onPicked,
+  }) {
+    if (_overlay != null) return;
+    PlayerDataCache.ensureLoaded();
+    _selectedName = currentName;
+
+    final overlay = document.createElement('div') as HTMLElement;
+    overlay.className = 'dialog-overlay';
+    overlay.innerHTML = _buildShellHtml().toJS;
+    document.body!.append(overlay);
+    _overlay = overlay;
+
+    _escFn = _addEscListener(close);
+    _wireOverlayClose(overlay, close);
+
+    final cancelBtn = overlay.querySelector('#cb-cancel') as HTMLElement?;
+    cancelBtn?.addEventListener('click', (Event e) { e.stopPropagation(); close(); }.toJS);
+    overlay.querySelector('.dialog-close')
+        ?.addEventListener('click', (Event _) { cancelBtn?.click(); }.toJS);
+
+    overlay.querySelector('#cb-confirm')?.addEventListener('click', (Event e) {
+      e.stopPropagation();
+      final name = _selectedName;
+      if (name != null) onPicked(name);
+      close();
+    }.toJS);
+
+    _buildGrid(overlay);
+  }
+
+  void close() {
+    if (_overlay == null) return;
+    _removeEscListener(_escFn!);
+    _escFn = null;
+    _overlay!.remove();
+    _overlay = null;
+  }
+
+  String _buildShellHtml() => '''
+<div class="dialog face-picker-dialog">
+  <div class="dialog-header">
+    <span>Coach Body Picker</span>
+    <span class="material-symbols-outlined dialog-close">close</span>
+  </div>
+  <div class="dialog-body" style="padding:8px;overflow-y:auto;flex:1;">
+    <div id="cb-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
+  </div>
+  <div class="dialog-footer">
+    <button class="btn btn-outlined" id="cb-cancel">Cancel</button>
+    <button class="btn btn-filled" id="cb-confirm">Select</button>
+  </div>
+</div>''';
+
+  void _buildGrid(HTMLElement overlay) {
+    final grid = overlay.querySelector('#cb-grid') as HTMLElement?;
+    if (grid == null) return;
+
+    final names = PlayerDataCache.allCoachBodyNames;
+    final buf = StringBuffer();
+    for (final name in names) {
+      final isSel = name == _selectedName;
+      final bytes = PlayerDataCache.getCoachBody(name);
+      final url = bytes != null
+          ? URL.createObjectURL(Blob([bytes.toJS].toJS))
+          : '';
+      final label = name; // keep brackets: [Dennis Erickson]
+      buf.write(
+        '<div class="face-thumb${isSel ? ' selected' : ''}" data-name="${_esc(name)}" '
+        'title="${_esc(label)}" style="height:160px;display:flex;flex-direction:column;'
+        'align-items:center;gap:4px;padding:4px;">'
+        '${url.isNotEmpty ? '<img src="$url" alt="${_esc(label)}" style="flex:1;object-fit:contain;width:100%;min-height:0;">' : '<div style="flex:1;"></div>'}'
+        '<div style="font-size:10px;text-align:center;line-height:1.2;'
+        'color:var(--color-text-secondary);overflow:hidden;max-width:100%;">${_esc(label)}</div>'
+        '</div>',
+      );
+    }
+    grid.innerHTML = buf.toString().toJS;
+
+    grid.addEventListener('click', (Event e) {
+      final thumb = (e.target as HTMLElement?)?.closest('.face-thumb') as HTMLElement?;
+      if (thumb == null) return;
+      final name = thumb.dataset['name'];
+      if (name.isEmpty) return;
+      final old = grid.querySelectorAll('.face-thumb.selected');
+      for (var i = 0; i < old.length; i++) {
+        (old.item(i) as HTMLElement?)?.classList.remove('selected');
+      }
+      thumb.classList.add('selected');
+      _selectedName = name;
+    }.toJS);
+  }
+}
+
 // ─── PBP Name Picker Dialog ───────────────────────────────────────────────────
 
 /// Searchable list picker for PBP announcer name IDs.

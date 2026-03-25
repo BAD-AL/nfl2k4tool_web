@@ -15,6 +15,7 @@ import 'screens/schedule_editor_screen.dart';
 import 'screens/text_editor_screen.dart';
 import 'screens/options_screen.dart';
 import 'screens/coach_editor_screen.dart';
+import 'screens/team_data_editor_screen.dart';
 
 late AppState appState;
 late Shell shell;
@@ -26,6 +27,7 @@ late ScheduleEditorScreen scheduleEditorScreen;
 late TextEditorScreen textEditorScreen;
 late OptionsScreen optionsScreen;
 late CoachEditorScreen coachEditorScreen;
+late TeamDataEditorScreen teamDataEditorScreen;
 
 void main() {
   appState = AppState();
@@ -45,6 +47,7 @@ void main() {
   textEditorScreen = TextEditorScreen(appState);
   optionsScreen = OptionsScreen(appState);
   coachEditorScreen = CoachEditorScreen(appState);
+  teamDataEditorScreen = TeamDataEditorScreen(appState);
 
   // Wire interactions
   topBar.wire(
@@ -93,6 +96,8 @@ void _renderActiveScreen() {
       optionsScreen.render();
     case NavSection.coaches:
       coachEditorScreen.render();
+    case NavSection.teamData:
+      teamDataEditorScreen.render();
   }
 }
 

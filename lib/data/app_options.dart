@@ -11,6 +11,7 @@ class AppOptions {
   bool showFreeAgents;
   bool showDraftClass;
   bool showCoaches;
+  bool showTeamData;
 
   // Auto Update section
   bool autoUpdateDepthCharts;
@@ -26,6 +27,7 @@ class AppOptions {
     this.showFreeAgents = false,
     this.showDraftClass = false,
     this.showCoaches = false,
+    this.showTeamData = false,
     this.autoUpdateDepthCharts = true,
     this.autoUpdatePhotos = false,
     this.autoUpdatePBP = true,
@@ -44,6 +46,7 @@ class AppOptions {
       showFreeAgents:        get('showFreeAgents', false),
       showDraftClass:        get('showDraftClass', false),
       showCoaches:           get('showCoaches', false),
+      showTeamData:          get('showTeamData', false),
       autoUpdateDepthCharts: get('autoUpdateDepthCharts', true),
       autoUpdatePhotos:      get('autoUpdatePhotos', false),
       autoUpdatePBP:         get('autoUpdatePBP', true),
@@ -60,6 +63,7 @@ class AppOptions {
     s.setItem('showFreeAgents',        showFreeAgents.toString());
     s.setItem('showDraftClass',        showDraftClass.toString());
     s.setItem('showCoaches',           showCoaches.toString());
+    s.setItem('showTeamData',          showTeamData.toString());
     s.setItem('autoUpdateDepthCharts', autoUpdateDepthCharts.toString());
     s.setItem('autoUpdatePhotos',      autoUpdatePhotos.toString());
     s.setItem('autoUpdatePBP',         autoUpdatePBP.toString());

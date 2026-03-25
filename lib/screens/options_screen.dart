@@ -38,6 +38,7 @@ class OptionsScreen {
     ${_row('showFreeAgents',   'Show Free Agents',   o.showFreeAgents)}
     ${_row('showDraftClass',   'Show Draft Class',   o.showDraftClass)}
     ${_row('showCoaches',      'Show Coaches',       o.showCoaches)}
+    ${_row('showTeamData',     'Show Team Data',     o.showTeamData)}
   </div>
 
   <div class="options-card">
@@ -68,6 +69,7 @@ class OptionsScreen {
   static const _textViewKeys = {
     'showPlayers', 'showSchedule', 'showAttributes', 'showAppearance',
     'showSpecialTeams', 'showFreeAgents', 'showDraftClass', 'showCoaches',
+    'showTeamData',
   };
 
   static const _autoUpdateKeys = {
@@ -157,6 +159,7 @@ class OptionsScreen {
       case 'showFreeAgents':        o.showFreeAgents = value;
       case 'showDraftClass':        o.showDraftClass = value;
       case 'showCoaches':           o.showCoaches = value;
+      case 'showTeamData':          o.showTeamData = value;
       case 'autoUpdateDepthCharts': o.autoUpdateDepthCharts = value;
       case 'autoUpdatePhotos':      o.autoUpdatePhotos = value;
       case 'autoUpdatePBP':         o.autoUpdatePBP = value;

@@ -207,6 +207,128 @@ List<String> parseCollegeNames(String text) {
   return seen.toList()..sort();
 }
 
+// ─── Coach parse ─────────────────────────────────────────────────────────────
+
+/// A transient display record for a single coach row.
+class CoachRow {
+  final int lineIndex;
+  final Map<String, String> fields;
+  const CoachRow({required this.lineIndex, required this.fields});
+
+  String get team      => fields['Team']      ?? '';
+  String get firstName => fields['FirstName'] ?? '';
+  String get lastName  => fields['LastName']  ?? '';
+  String get body      => fields['Body']      ?? '';
+  String get photo     => fields['Photo']     ?? '';
+  String get fullName  => '$firstName $lastName'.trim();
+}
+
+/// Parses coach data from [text].
+///
+/// Returns the column headers (from the `CoachKEY=` line) and a list of
+/// [CoachRow]s, one per `Coach,...` data line.
+({List<String> headers, List<CoachRow> coaches}) parseCoachLines(String text) {
+  final lines = text.split('\n');
+  List<String> headers = [];
+  final coaches = <CoachRow>[];
+
+  for (int i = 0; i < lines.length; i++) {
+    final trimmed = lines[i].trim();
+    if (trimmed.toLowerCase().startsWith('coachkey=')) {
+      final keyLine = trimmed.substring('coachkey='.length);
+      headers = splitCsv(keyLine).map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+      continue;
+    }
+    if (headers.isNotEmpty && trimmed.toLowerCase().startsWith('coach,')) {
+      final vals = splitCsv(trimmed);
+      final fieldMap = <String, String>{};
+      for (int j = 0; j < headers.length && j < vals.length; j++) {
+        fieldMap[headers[j]] = vals[j];
+      }
+      coaches.add(CoachRow(lineIndex: i, fields: fieldMap));
+    }
+  }
+  return (headers: headers, coaches: coaches);
+}
+
+/// Total bytes used by all coach strings across [coaches].
+///
+/// Counts FirstName, LastName, Info1, Info2, Info3 as UTF-16LE
+/// null-terminated strings: `(length + 1) × 2` bytes each.
+/// Only fields present in [headers] are counted.
+int coachStringBytesUsed(List<CoachRow> coaches, List<String> headers) {
+  const stringFields = ['FirstName', 'LastName', 'Info1', 'Info2', 'Info3'];
+  int total = 0;
+  for (final coach in coaches) {
+    for (final field in stringFields) {
+      if (!headers.contains(field)) continue;
+      final s = coach.fields[field] ?? '';
+      total += (s.length + 1) * 2;
+    }
+  }
+  return total;
+}
+
+/// Total byte budget for all coach strings in the save file (UTF-16LE section).
+const int kCoachStringBudget = 0x14b1; // 5297 bytes
+
+/// Total character budget for coach strings.
+/// Since UTF-16LE encodes each character (and each null terminator) in 2 bytes,
+/// the character budget is exactly half the byte budget.
+const int kCoachStringCharBudget = kCoachStringBudget ~/ 2; // 2648
+
+/// Total characters used by all coach strings across [coaches].
+/// Divides the byte cost by 2 since UTF-16LE encodes each character in 2 bytes.
+int coachStringCharsUsed(List<CoachRow> coaches, List<String> headers) =>
+    coachStringBytesUsed(coaches, headers) ~/ 2;
+
+// ─── TeamData parse ───────────────────────────────────────────────────────────
+
+/// A transient display record for a single TeamData row.
+class TeamDataRow {
+  final int lineIndex;
+  final Map<String, String> fields;
+  const TeamDataRow({required this.lineIndex, required this.fields});
+
+  String get team          => fields['Team']          ?? '';
+  String get nickname      => fields['Nickname']      ?? '';
+  String get abbrev        => fields['Abbrev']        ?? '';
+  String get stadium       => fields['Stadium']       ?? '';
+  String get city          => fields['City']          ?? '';
+  String get abbrAlt       => fields['AbbrAlt']       ?? '';
+  String get logo          => fields['Logo']          ?? '';
+  String get playbook      => fields['Playbook']      ?? '';
+  String get defaultJersey => fields['DefaultJersey'] ?? '';
+}
+
+/// Parses team data from [text].
+///
+/// Returns the column headers (from the `TeamDataKey=` line) and a list of
+/// [TeamDataRow]s, one per `TeamData,...` data line.
+({List<String> headers, List<TeamDataRow> teams}) parseTeamDataLines(String text) {
+  final lines = text.split('\n');
+  List<String> headers = [];
+  final teams = <TeamDataRow>[];
+
+  for (int i = 0; i < lines.length; i++) {
+    final trimmed = lines[i].trim();
+    if (trimmed.toLowerCase().startsWith('teamdatakey=')) {
+      final keyLine = trimmed.substring('teamdatakey='.length);
+      headers = splitCsv(keyLine).map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+      continue;
+    }
+    if (headers.isNotEmpty && trimmed.toLowerCase().startsWith('teamdata,')) {
+      final vals = splitCsv(trimmed);
+      final fieldMap = <String, String>{};
+      for (int j = 0; j < headers.length && j < vals.length; j++) {
+        fieldMap[headers[j]] = vals[j];
+      }
+      teams.add(TeamDataRow(lineIndex: i, fields: fieldMap));
+    }
+  }
+  return (headers: headers, teams: teams);
+}
+
 // ─── In-place field editing ───────────────────────────────────────────────────
 
 /// Returns a new text string with the field [columnKey] on line [lineIndex]

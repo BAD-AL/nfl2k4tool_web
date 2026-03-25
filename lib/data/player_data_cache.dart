@@ -20,12 +20,18 @@ class PlayerDataCache {
 
   static Map<String, List<int>>? _categories;
 
+  /// ArchiveFile references keyed by coach body name e.g. `[Dennis Erickson]`.
+  static Map<String, ArchiveFile>? _bodyIndex;
+
+  /// Decompressed JPEG bytes for coach bodies, populated on first access.
+  static final Map<String, Uint8List> _bodyCache = {};
+
   /// Parses the ZIP directory on first call; no-op thereafter.
   /// Does NOT decompress any photo data — completes in well under 100 ms.
   static void ensureLoaded() {
     if (_index != null) return;
 
-    final arc = ZipDecoder().decodeBytes(kPlayerDataFile);
+    final arc = ZipDecoder().decodeBytes(kPlayerDataZip);
 
     final index = <int, ArchiveFile>{};
     Map<String, List<int>>? categories;
@@ -41,6 +47,9 @@ class PlayerDataCache {
         if (id != null) {
           index[id] = file; // store ref only — no .content call
         }
+      } else if (name.endsWith('.jpg') && name.contains('CoachBodies/')) {
+        final basename = name.split('/').last.replaceAll('.jpg', '');
+        (_bodyIndex ??= {})[basename] = file;
       } else if (name.endsWith('FaceFormCategories.json')) {
         // Categories JSON is tiny; decode it eagerly.
         final json = utf8.decode(file.content as List<int>);
@@ -68,6 +77,24 @@ class PlayerDataCache {
     final bytes = archiveFile.content as Uint8List;
     _byteCache[id] = bytes;
     return bytes;
+  }
+
+  /// Returns the JPEG bytes for coach body [name] (e.g. `[Dennis Erickson]`).
+  /// Decompresses on first access and caches. Returns `null` if not found.
+  static Uint8List? getCoachBody(String name) {
+    final cached = _bodyCache[name];
+    if (cached != null) return cached;
+    final archiveFile = _bodyIndex?[name];
+    if (archiveFile == null) return null;
+    final bytes = archiveFile.content as Uint8List;
+    _bodyCache[name] = bytes;
+    return bytes;
+  }
+
+  /// All available coach body names, sorted.
+  static List<String> get allCoachBodyNames {
+    final names = (_bodyIndex?.keys ?? <String>[]).toList()..sort();
+    return names;
   }
 
   /// All available photo IDs, sorted ascending.
