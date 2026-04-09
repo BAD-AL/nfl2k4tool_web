@@ -46,6 +46,7 @@ class OptionsScreen {
     ${_row('autoUpdatePhotos',      'Auto Update Photos',       o.autoUpdatePhotos)}
     ${_row('autoUpdatePBP',         'Auto Update PBP',          o.autoUpdatePBP)}
     ${_row('autoFixSkinFromPhoto',  'Auto Fix Skin from Photo', o.autoFixSkinFromPhoto)}
+    ${_row('vrabelFix',             'Vrabel Fix',               o.vrabelFix)}
   </div>
 
 </div>
@@ -73,7 +74,7 @@ class OptionsScreen {
   };
 
   static const _autoUpdateKeys = {
-    'autoUpdateDepthCharts', 'autoUpdatePhotos', 'autoUpdatePBP', 'autoFixSkinFromPhoto',
+    'autoUpdateDepthCharts', 'autoUpdatePhotos', 'autoUpdatePBP', 'autoFixSkinFromPhoto', 'vrabelFix',
   };
 
   void _wireToggles() {
@@ -139,12 +140,14 @@ class OptionsScreen {
         .replaceAll('\nAutoUpdateDepthChart', '')
         .replaceAll('\nAutoUpdatePhoto', '')
         .replaceAll('\nAutoUpdatePBP', '')
-        .replaceAll('\nAutoFixSkinFromPhoto', '');
+        .replaceAll('\nAutoFixSkinFromPhoto', '')
+        .replaceAll('\nvrabelFix', '');
     final o = appState.options;
     if (o.autoUpdateDepthCharts) text += '\nAutoUpdateDepthChart';
     if (o.autoUpdatePhotos) text += '\nAutoUpdatePhoto';
     if (o.autoUpdatePBP) text += '\nAutoUpdatePBP';
     if (o.autoFixSkinFromPhoto) text += '\nAutoFixSkinFromPhoto';
+    if (o.vrabelFix) text += '\nvrabelFix';
     appState.textContent = text;
   }
 
@@ -165,6 +168,7 @@ class OptionsScreen {
       case 'autoUpdatePhotos':      o.autoUpdatePhotos = value;
       case 'autoUpdatePBP':         o.autoUpdatePBP = value;
       case 'autoFixSkinFromPhoto':  o.autoFixSkinFromPhoto = value;
+      case 'vrabelFix':             o.vrabelFix = value;
     }
   }
 

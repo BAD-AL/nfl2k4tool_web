@@ -399,7 +399,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: a4b36f150bf096e7028ea10585dfc3ba5c5bfc13
+      resolved-ref: a0689e46e207eaa4e35cde01c77566a4f75ed479
       url: "https://github.com/BAD-AL/nfl2k4tool_dart.git"
     source: git
     version: "1.0.0"

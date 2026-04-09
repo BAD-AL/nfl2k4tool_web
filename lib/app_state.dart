@@ -90,6 +90,7 @@ class AppState {
     if (opts.autoUpdatePhotos) buf.write('\nAutoUpdatePhoto');
     if (opts.autoUpdatePBP) buf.write('\nAutoUpdatePBP');
     if (opts.autoFixSkinFromPhoto) buf.write('\nAutoFixSkinFromPhoto');
+    if (opts.vrabelFix) buf.write('\nvrabelFix');
     return buf.toString();
   }
 

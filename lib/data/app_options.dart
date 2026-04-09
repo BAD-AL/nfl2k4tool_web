@@ -20,6 +20,7 @@ class AppOptions {
   bool autoUpdatePhotos;
   bool autoUpdatePBP;
   bool autoFixSkinFromPhoto;
+  bool vrabelFix;
 
   AppOptions({
     this.showPlayers = true,
@@ -34,6 +35,7 @@ class AppOptions {
     this.autoUpdatePhotos = false,
     this.autoUpdatePBP = true,
     this.autoFixSkinFromPhoto = false,
+    this.vrabelFix = true,
   });
 
   static AppOptions load() {
@@ -53,6 +55,7 @@ class AppOptions {
       autoUpdatePhotos:      get('autoUpdatePhotos', false),
       autoUpdatePBP:         get('autoUpdatePBP', true),
       autoFixSkinFromPhoto:  get('autoFixSkinFromPhoto', false),
+      vrabelFix:             get('vrabelFix', true),
     );
   }
 
@@ -70,5 +73,6 @@ class AppOptions {
     s.setItem('autoUpdatePhotos',      autoUpdatePhotos.toString());
     s.setItem('autoUpdatePBP',         autoUpdatePBP.toString());
     s.setItem('autoFixSkinFromPhoto',  autoFixSkinFromPhoto.toString());
+    s.setItem('vrabelFix',             vrabelFix.toString());
   }
 }
