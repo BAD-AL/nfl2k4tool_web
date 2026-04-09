@@ -34,7 +34,6 @@ class OptionsScreen {
     ${_row('showSchedule',     'Show Schedule',      o.showSchedule)}
     ${_row('showAttributes',   'Show Attributes',    o.showAttributes)}
     ${_row('showAppearance',   'Show Appearance',    o.showAppearance)}
-    ${_row('showSpecialTeams', 'Show Special Teams', o.showSpecialTeams)}
     ${_row('showFreeAgents',   'Show Free Agents',   o.showFreeAgents)}
     ${_row('showDraftClass',   'Show Draft Class',   o.showDraftClass)}
     ${_row('showCoaches',      'Show Coaches',       o.showCoaches)}
@@ -69,7 +68,7 @@ class OptionsScreen {
 
   static const _textViewKeys = {
     'showPlayers', 'showSchedule', 'showAttributes', 'showAppearance',
-    'showSpecialTeams', 'showFreeAgents', 'showDraftClass', 'showCoaches',
+    'showFreeAgents', 'showDraftClass', 'showCoaches',
     'showTeamData',
   };
 
@@ -158,7 +157,6 @@ class OptionsScreen {
       case 'showSchedule':          o.showSchedule = value;
       case 'showAttributes':        o.showAttributes = value;
       case 'showAppearance':        o.showAppearance = value;
-      case 'showSpecialTeams':      o.showSpecialTeams = value;
       case 'showFreeAgents':        o.showFreeAgents = value;
       case 'showDraftClass':        o.showDraftClass = value;
       case 'showCoaches':           o.showCoaches = value;

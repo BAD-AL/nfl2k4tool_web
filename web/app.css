@@ -4,50 +4,51 @@
 
 :root {
   /* Accent colors — same in both themes */
-  --color-gold:        #C9A227;
+  --color-accent:      #0078FF; /* Electric Blue */
+  --color-accent-soft: #00E5FF; /* Ice Cyan */
   --color-turf:        #1A6B3C;
   --color-success:     #3FB950;
   --color-danger:      #CF222E;
 
   /* Dark theme (default) */
-  --color-bg:          #0D1117;
-  --color-surface:     #161B22;
-  --color-border:      #30363D;
-  --color-chip:        #21262D;
-  --color-text:        #E6EDF3;
-  --color-muted:       #8B949E;
-  --color-rail-bg:     #0D1117;
-  --color-active-bg:   rgba(201, 162, 39, 0.12);
+  --color-bg:          #121418; /* Deep Midnight */
+  --color-surface:     #1A1D23;
+  --color-border:      #2D333B;
+  --color-chip:        #252A31;
+  --color-text:        #FFFFFF;
+  --color-muted:       #A0A8B0;
+  --color-rail-bg:     #121418;
+  --color-active-bg:   rgba(0, 120, 255, 0.15);
 
   /* Dark syntax */
-  --syntax-team:       #C9A227;
+  --syntax-team:       #00E5FF;
   --syntax-header:     #6E7681;
   --syntax-position:   #3FB950;
-  --syntax-name:       #E6EDF3;
+  --syntax-name:       #FFFFFF;
   --syntax-number:     #79C0FF;
   --syntax-string:     #FFB86C;
   --syntax-comma:      #484F58;
-  --syntax-base:       #E6EDF3;
-  --syntax-hit:        rgba(201, 162, 39, 0.33);
-  --syntax-active:     rgba(201, 162, 39, 0.80);
+  --syntax-base:       #FFFFFF;
+  --syntax-hit:        rgba(0, 120, 255, 0.33);
+  --syntax-active:     rgba(0, 120, 255, 0.80);
 
   /* Schedule colors */
-  --schedule-away:     #F59E0B;
-  --schedule-home:     #10B981;
+  --schedule-away:     #79C0FF;
+  --schedule-home:     #00E5FF;
 }
 
 [data-theme="light"] {
-  --color-bg:          #F6F8FA;
+  --color-bg:          #F0F4F8;
   --color-surface:     #FFFFFF;
   --color-border:      #D0D7DE;
-  --color-chip:        #E8EAED;
+  --color-chip:        #E1E8ED;
   --color-text:        #1F2328;
   --color-muted:       #656D76;
-  --color-rail-bg:     #F0F2F5;
-  --color-active-bg:   rgba(201, 162, 39, 0.12);
+  --color-rail-bg:     #EBF0F5;
+  --color-active-bg:   rgba(0, 120, 255, 0.10);
 
   /* Light syntax overrides */
-  --syntax-team:       #835C00;
+  --syntax-team:       #005FB8;
   --syntax-header:     #656D76;
   --syntax-position:   #1A7F37;
   --syntax-name:       #1F2328;
@@ -145,7 +146,7 @@ body {
 }
 
 .logo-nfl {
-  color: var(--color-gold);
+  color: var(--color-accent-soft);
 }
 
 .logo-rest {
@@ -169,7 +170,7 @@ body {
 }
 
 .file-badge-type {
-  color: var(--color-gold);
+  color: var(--color-accent);
   font-weight: 700;
 }
 
@@ -223,13 +224,13 @@ body {
 
 .nav-item.active {
   background: var(--color-active-bg);
-  border-left-color: var(--color-gold);
-  color: var(--color-gold);
+  border-left-color: var(--color-accent);
+  color: var(--color-accent);
   font-weight: 600;
 }
 
 .nav-item.active .nav-icon {
-  color: var(--color-gold);
+  color: var(--color-accent);
 }
 
 .nav-item--disabled {
@@ -244,7 +245,7 @@ body {
 }
 
 .nav-item.active .nav-icon {
-  color: var(--color-gold);
+  color: var(--color-accent);
 }
 
 .nav-label {
@@ -374,7 +375,7 @@ body {
 
 .section-header .section-icon {
   font-size: 18px;
-  color: var(--color-gold);
+  color: var(--color-accent);
 }
 
 .section-header .section-title {
@@ -438,7 +439,7 @@ body {
   width: 11px;
   height: 11px;
   cursor: pointer;
-  accent-color: var(--color-gold);
+  accent-color: var(--color-accent);
   margin: 0;
 }
 
@@ -455,8 +456,8 @@ body {
 }
 
 .pct-btn:hover {
-  border-color: var(--color-gold);
-  color: var(--color-gold);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .player-editor-body {
@@ -545,8 +546,8 @@ body {
 
 .pos-chip.active {
   background: var(--color-active-bg);
-  border-color: var(--color-gold);
-  color: var(--color-gold);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .player-list {
@@ -584,8 +585,8 @@ body {
 }
 
 .player-row.selected .pos-badge {
-  border-color: var(--color-gold);
-  color: var(--color-gold);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .player-row-info {
@@ -694,7 +695,7 @@ body {
   width: 56px;
   height: 56px;
   border-radius: 6px;
-  border: 2px solid var(--color-gold);
+  border: 2px solid var(--color-accent);
   overflow: hidden;
   cursor: pointer;
   flex-shrink: 0;
@@ -768,8 +769,8 @@ body {
 }
 
 .attr-tab.active {
-  color: var(--color-gold);
-  border-bottom-color: var(--color-gold);
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
   font-weight: 700;
 }
 
@@ -836,7 +837,7 @@ body {
 
 .attr-card.numeric .numeric-display:hover .numeric-side {
   opacity: 1;
-  color: var(--color-gold);
+  color: var(--color-accent);
 }
 
 .numeric-bar-track {
@@ -850,7 +851,7 @@ body {
 
 .numeric-bar-fill {
   height: 100%;
-  background: var(--color-gold);
+  background: var(--color-accent);
   border-radius: 2px;
   pointer-events: none;
 }
@@ -870,7 +871,7 @@ body {
 
 .slider-row input[type="range"] {
   flex: 1;
-  accent-color: var(--color-gold);
+  accent-color: var(--color-accent);
   cursor: pointer;
   min-width: 0;
 }
@@ -995,7 +996,7 @@ body {
 .autocomplete-item:hover,
 .autocomplete-item.focused {
   background: var(--color-active-bg);
-  color: var(--color-gold);
+  color: var(--color-accent);
 }
 
 /* MappedId card */
@@ -1033,7 +1034,7 @@ body {
 }
 
 .mapped-id-search:hover {
-  color: var(--color-gold);
+  color: var(--color-accent);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1066,8 +1067,8 @@ body {
 }
 
 .sch-tab.active {
-  color: var(--color-gold);
-  border-bottom-color: var(--color-gold);
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
   font-weight: 600;
 }
 
@@ -1105,8 +1106,8 @@ body {
 
 .sch-week-pill.active {
   background: var(--color-active-bg);
-  border-color: var(--color-gold);
-  color: var(--color-gold);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
   font-weight: 600;
 }
 
@@ -1333,8 +1334,8 @@ body {
 }
 
 .sch-team-btn:hover {
-  border-color: var(--color-gold);
-  color: var(--color-gold);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
   background: var(--color-active-bg);
 }
 
@@ -1428,8 +1429,8 @@ body {
 
 .text-toolbar-btn.active {
   background: var(--color-active-bg);
-  border-color: var(--color-gold);
-  color: var(--color-gold);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .text-search-input {
@@ -1445,7 +1446,7 @@ body {
 }
 
 .text-search-input:focus {
-  border-color: var(--color-gold);
+  border-color: var(--color-accent);
 }
 
 .text-body {
@@ -1588,7 +1589,7 @@ body {
 .options-card-title {
   font-size: 13px;
   font-weight: 700;
-  color: var(--color-gold);
+  color: var(--color-accent);
   padding: 10px 16px;
   border-bottom: 1px solid var(--color-border);
 }
@@ -1649,12 +1650,12 @@ body {
 
 .toggle-switch input:checked + .toggle-track {
   background: var(--color-active-bg);
-  border-color: var(--color-gold);
+  border-color: var(--color-accent);
 }
 
 .toggle-switch input:checked + .toggle-track::after {
   transform: translateX(16px);
-  background: var(--color-gold);
+  background: var(--color-accent);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1795,7 +1796,7 @@ body {
 }
 
 .face-thumb.selected {
-  border-color: var(--color-gold);
+  border-color: var(--color-accent);
 }
 
 .face-id-label {
@@ -1840,8 +1841,8 @@ body {
 }
 
 .pbp-row.selected {
-  background: color-mix(in srgb, var(--color-gold) 15%, transparent);
-  color: var(--color-gold);
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  color: var(--color-accent);
 }
 
 .pbp-name { flex: 1; }
@@ -1876,13 +1877,13 @@ body {
 }
 
 .team-abbr-btn.selected {
-  background: var(--color-gold);
-  border-color: var(--color-gold);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
   color: #000;
 }
 
 .team-abbr-btn:hover:not(.selected) {
-  border-color: var(--color-gold);
+  border-color: var(--color-accent);
 }
 
 /* Apply-to-save feedback modal */
@@ -1932,7 +1933,7 @@ body {
 }
 
 .btn-filled {
-  background: var(--color-gold);
+  background: var(--color-accent);
   color: #000;
   font-weight: 700;
 }

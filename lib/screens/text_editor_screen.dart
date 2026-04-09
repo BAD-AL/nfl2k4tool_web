@@ -1,6 +1,6 @@
 import 'dart:js_interop';
 import 'package:web/web.dart';
-import 'package:nfl2k5tool_dart/nfl2k5tool_dart.dart';
+import 'package:nfl2k4tool_dart/nfl2k4tool_dart.dart';
 import '../app_state.dart';
 
 const _kTextCommandsContent = '''
@@ -19,37 +19,6 @@ Example:
 
 The above example will lookup the specified players and set their photo the the one specified.
 
-====== LookupAndVerify ======
-Example:
-    LookupAndVerify
-    Key= Position,fname,lname,Photo
-    QB,Jimmy,Garoppolo,0481,
-    QB,Nick,Mullens,0799,
-    RB,Tevin,Coleman,0187,
-    RB,Matt,Breida,0242,
-# Will produce error message for differences
-
-====== ApplyFormula ======
-Can be used to modify players meeting specified attributes.
-The 'Global Edit Form' Can be used to craft and apply formulas.
-The formulas will print to the console when they are run from the
-Global edit form so you can more easily see/create/use/re-use them.
-
-Basic syntax:
-    ApplyFormula(<formula>, <target attribute>, < target value>, [positions], <Mode (optional)>)
-
-Examples:
-    # For all kickers, punters or quarterbacks who have a white turtleneck, take away 1 speed point
-    ApplyFormula('Turtleneck = White','Speed',-1, [K,P,QB], Add)
-
-    # For all quarterbacks who wear a RightGlove, set their RightGlove to 'None'
-    ApplyFormula('RightGlove <> None','RightGlove','None', [QB])
-
-    # For all quarterbacks who have speed greater than 80, set their 'Stamana' to 95% of what it currently is
-    ApplyFormula('Speed > 80','Stamina',95, [QB], Percent)
-
-    # For all kickers and punters, set their stanama to '95'
-    ApplyFormula('Always','Stamina',95, [K,P])
 ''';
 
 class TextEditorScreen {
@@ -540,12 +509,11 @@ ${_sidebarCollapsed ? '' : '''
   void _applyToSave() {
     final tool = _appState.tool;
     if (tool == null) return;
-    StaticUtils.Errors.clear();
-    InputParser(tool).ProcessText(_appState.textContent);
-    final result = StaticUtils.Errors.isEmpty
-        ? 'Done — no errors.'
-        : StaticUtils.Errors.join('\n');
-    _showFeedbackModal(result);
+    final result = InputParser(tool).applyText(_appState.textContent);
+    final msg = result.errors.isEmpty
+        ? 'Done — ${result.updated} updated, ${result.skipped} skipped.'
+        : 'Done — ${result.updated} updated, ${result.skipped} skipped.\n\nErrors:\n${result.errors.join('\n')}';
+    _showFeedbackModal(msg);
   }
 
   void _listContents(HTMLTextAreaElement area) {
@@ -563,12 +531,11 @@ ${_sidebarCollapsed ? '' : '''
   void _doProcessText(String command, String successPrefix) {
     final tool = _appState.tool;
     if (tool == null) return;
-    StaticUtils.Errors.clear();
-    InputParser(tool).ProcessText(command);
-    final result = StaticUtils.Errors.isEmpty
-        ? '$successPrefix — no errors.'
-        : StaticUtils.Errors.join('\n');
-    _showFeedbackModal(result);
+    final result = InputParser(tool).applyText(command);
+    final msg = result.errors.isEmpty
+        ? '$successPrefix — ${result.updated} updated.'
+        : '$successPrefix — ${result.updated} updated.\n\nErrors:\n${result.errors.join('\n')}';
+    _showFeedbackModal(msg);
   }
 
   // ─── Feedback modal ───────────────────────────────────────────────────────

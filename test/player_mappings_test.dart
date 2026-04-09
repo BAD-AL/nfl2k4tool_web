@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:nfl2k5tool_web/data/player_mappings.dart';
+import 'package:nfl2k4tool_web/data/player_mappings.dart';
 
 void main() {
   group('photoOptions', () {

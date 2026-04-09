@@ -10,7 +10,6 @@ class AppOptions {
   bool showSchedule;
   bool showAppearance;
   bool showAttributes;
-  bool showSpecialTeams;
   bool showFreeAgents;
   bool showDraftClass;
   bool showCoaches;
@@ -27,7 +26,6 @@ class AppOptions {
     this.showSchedule = true,
     this.showAppearance = true,
     this.showAttributes = true,
-    this.showSpecialTeams = false,
     this.showFreeAgents = false,
     this.showDraftClass = false,
     this.showCoaches = false,
@@ -47,7 +45,6 @@ class AppOptions {
       showSchedule:          get('showSchedule', true),
       showAppearance:        get('showAppearance', true),
       showAttributes:        get('showAttributes', true),
-      showSpecialTeams:      get('showSpecialTeams', false),
       showFreeAgents:        get('showFreeAgents', false),
       showDraftClass:        get('showDraftClass', false),
       showCoaches:           get('showCoaches', false),
@@ -65,7 +62,6 @@ class AppOptions {
     s.setItem('showSchedule',          showSchedule.toString());
     s.setItem('showAppearance',        showAppearance.toString());
     s.setItem('showAttributes',        showAttributes.toString());
-    s.setItem('showSpecialTeams',      showSpecialTeams.toString());
     s.setItem('showFreeAgents',        showFreeAgents.toString());
     s.setItem('showDraftClass',        showDraftClass.toString());
     s.setItem('showCoaches',           showCoaches.toString());

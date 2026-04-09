@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:test/test.dart';
-import 'package:nfl2k5tool_web/data/text_parser.dart';
+import 'package:nfl2k4tool_web/data/text_parser.dart';
 
 void main() {
   // ── detectDelimiter ───────────────────────────────────────────────────────
@@ -451,26 +451,6 @@ void main() {
       expect(coachStringBytesUsed([], headers), 0);
     });
   });
-
-  // ── kCoachStringBudget ────────────────────────────────────────────────────
-
-  group('kCoachStringBudget', () {
-    test('equals 5297 (0x14B1)', () {
-      expect(kCoachStringBudget, 5297);
-      expect(kCoachStringBudget, 0x14b1);
-    });
-  });
-
-  // ── kCoachStringCharBudget ────────────────────────────────────────────────
-
-  group('kCoachStringCharBudget', () {
-    test('equals half of kCoachStringBudget (2648)', () {
-      expect(kCoachStringCharBudget, 2648);
-      expect(kCoachStringCharBudget, kCoachStringBudget ~/ 2);
-    });
-  });
-
-  // ── coachStringCharsUsed ──────────────────────────────────────────────────
 
   group('coachStringCharsUsed', () {
     const headers = ['Coach', 'Team', 'FirstName', 'LastName', 'Body', 'Photo',

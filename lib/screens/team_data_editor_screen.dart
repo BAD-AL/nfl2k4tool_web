@@ -1,6 +1,6 @@
 import 'dart:js_interop';
 import 'package:web/web.dart';
-import 'package:nfl2k5tool_dart/nfl2k5tool_dart.dart' show GamesaveTool, SaveType;
+import 'package:nfl2k4tool_dart/nfl2k4tool_dart.dart' show kTeamNames, kPlaybookNames;
 
 import '../app_state.dart';
 import '../data/text_parser.dart';
@@ -26,130 +26,8 @@ String _esc(String s) => s
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;');
 
-// ─── Lookup tables ────────────────────────────────────────────────────────────
-
-const _kStadiums = [
-  '[Arizona Stadium]',
-  '[Georgia Dome]',
-  '[M&T Bank Stadium ]',
-  '[Ralph Wilson Stadium]',
-  '[B of A Stadium]',
-  '[Chicago Field]',
-  '[Paul Brown Stadium]',
-  '[Texas Stadium]',
-  '[INVESCO Field]',
-  '[Ford Field]',
-  '[Lambeau Field]',
-  '[RCA Dome]',
-  '[ALLTEL Stadium]',
-  '[Arrowhead Stadium]',
-  '[Pro Player Stadium]',
-  '[H. H. H. Metrodome]',
-  '[Gillette Stadium]',
-  '[Louisiana Super Dome]',
-  '[Giants Stadium]',
-  '[Jets Stadium]',
-  '[Network Associates]',
-  '[Lincoln Financial Field]',
-  '[Heinz Field]',
-  '[Edward Jones Dome ]',
-  '[QUALCOMM Stadium]',
-  '[San Francisco Park]',
-  '[Qwest Field]',
-  '[Tampa Bay Stadium]',
-  '[Titans Coliseum]',
-  '[Washington Field]',
-  '[Cleveland Stadium]',
-  '[Aloha Stadium]',
-  '[Practice Facility ]',
-  '[Visual Concepts Dome]',
-  '[Reliant Stadium]',
-  '[Future Aloha Stadium]',
-  '[Super Bowl 2005]',
-  '[Super Bowl 2008]',
-  '[Super Bowl 2006]',
-  '[Super Bowl 2007]',
-  '[Super Bowl Future]',
-  '[Ulterior Super Bowl]',
-  '[ESPN Stadium]',
-  '[Viper Stadium]',
-  '[Firecracker Dome]',
-  '[Gold Coast Dome]',
-  '[Arachnid Park]',
-  '[Southwest Dome]',
-  '[Mercury Stadium]',
-  '[Prehistoric Park]',
-  '[Iron Hammer Coliseum]',
-  '[Hog Heaven]',
-  '[Zoo Dome]',
-];
-
-/// Team logo name → numeric logo index mapping.
-/// Some custom teams intentionally share the same logo index.
-const _kLogos = [
-  (name: '49ers',         value:  25),
-  (name: 'Bears',         value:   5),
-  (name: 'Bengals',       value:   6),
-  (name: 'Bills',         value:   3),
-  (name: 'Broncos',       value:   8),
-  (name: 'Browns',        value:  30),
-  (name: 'Buccaneers',    value:  27),
-  (name: 'Cardinals',     value:   0),
-  (name: 'Chargers',      value:  24),
-  (name: 'Chiefs',        value:  13),
-  (name: 'Colts',         value:  11),
-  (name: 'Cowboys',       value:   7),
-  (name: 'Dolphins',      value:  14),
-  (name: 'Eagles',        value:  21),
-  (name: 'Falcons',       value:   1),
-  (name: 'Giants',        value:  18),
-  (name: 'Jaguars',       value:  12),
-  (name: 'Jets',          value:  19),
-  (name: 'Lions',         value:   9),
-  (name: 'Packers',       value:  10),
-  (name: 'Panthers',      value:   4),
-  (name: 'Patriots',      value:  16),
-  (name: 'Raiders',       value:  20),
-  (name: 'Rams',          value:  23),
-  (name: 'Ravens',        value:   2),
-  (name: 'Redskins',      value:  29),
-  (name: 'Saints',        value:  17),
-  (name: 'Seahawks',      value:  26),
-  (name: 'Steelers',      value:  22),
-  (name: 'Texans',        value:  37),
-  (name: 'Titans',        value:  28),
-  (name: 'Vikings',       value:  15),
-  (name: 'Swamis',        value:  33),
-  (name: 'Risky Picks',   value:  46),
-  (name: 'Wingadoros',    value:  46),
-  (name: 'Hammerheads',   value:  46),
-  (name: 'Cheesesteaks',  value:  95),
-  (name: 'Locos',         value:  96),
-  (name: 'Electra Shock', value:  97),
-  (name: 'Funkmasters',   value:  98),
-  (name: 'DreamTeam',     value:  99),
-  (name: 'FW Alumni',     value:  40),
-  (name: 'GP Alumni',     value:  41),
-  (name: 'MW Alumni',     value:  42),
-  (name: 'NE Alumni',     value:  43),
-  (name: 'SE Alumni',     value:  44),
-  (name: 'SW Alumni',     value:  45),
-  (name: 'AFC',           value:  34),
-  (name: 'NFC',           value:  35),
-  (name: 'NFL',           value:  31),
-];
-
-const _kPlaybooks = [
-  'PB_49ers', 'PB_Bears', 'PB_Bengals', 'PB_Bills', 'PB_Broncos', 'PB_Browns',
-  'PB_Buccaneers', 'PB_Cardinals', 'PB_Chargers', 'PB_Chiefs', 'PB_Colts',
-  'PB_Cowboys', 'PB_Dolphins', 'PB_Eagles', 'PB_Falcons', 'PB_Giants',
-  'PB_Jaguars', 'PB_Jets', 'PB_Lions', 'PB_Packers', 'PB_Panthers',
-  'PB_Patriots', 'PB_Raiders', 'PB_Rams', 'PB_Ravens', 'PB_Redskins',
-  'PB_Saints', 'PB_Seahawks', 'PB_Steelers', 'PB_Texans', 'PB_Titans',
-  'PB_Vikings', 'PB_West_Coast', 'PB_General', 'PB_User_A', 'PB_User_B',
-];
-
 // ─── TeamDataEditorScreen ─────────────────────────────────────────────────────
+
 
 class TeamDataEditorScreen {
   final AppState _appState;
@@ -233,18 +111,27 @@ class TeamDataEditorScreen {
   String _buildPctHtml() {
     final tool = _appState.tool;
     if (tool == null) return '';
-    final allChecked = GamesaveTool.Teams.every(tool.isTeamPlayerControlled);
+    
+    bool allChecked = true;
+    for (int i = 0; i < 32; i++) {
+      if (!tool.isTeamPlayerControlled(i)) {
+        allChecked = false;
+        break;
+      }
+    }
+    
     final btnLabel   = allChecked ? 'Uncheck All' : 'Check All';
     final buf = StringBuffer();
     buf.write('<div class="pct-row">'
         '<span class="pct-label">Player Controlled:</span>'
         '<button id="tde-pct-toggle" class="pct-btn">$btnLabel</button>'
         '<div class="pct-checkboxes">');
-    for (final team in GamesaveTool.Teams) {
+    for (int i = 0; i < 32; i++) {
+      final team = kTeamNames[i];
       final abbrev = _kTeamAbbrevs[team] ?? team.substring(0, 3).toUpperCase();
-      final checked = tool.isTeamPlayerControlled(team) ? ' checked' : '';
+      final checked = tool.isTeamPlayerControlled(i) ? ' checked' : '';
       buf.write('<label class="pct-cb" title="${_esc(team)}">'
-          '<input type="checkbox" class="pct-check" data-team="${_esc(team)}"$checked>'
+          '<input type="checkbox" class="pct-check" data-idx="$i"$checked>'
           '<span>${_esc(abbrev)}</span></label>');
     }
     buf.write('</div></div>');
@@ -284,32 +171,9 @@ class TeamDataEditorScreen {
     }
 
     final t       = _teams[_selectedIdx];
-    final tool    = _appState.tool;
-
-    // Build team-specific jersey options
-    final teamIdx = GamesaveTool.Teams.indexOf(t.team);
-    final jerseys = <String>[];
-    if (tool != null && teamIdx >= 0) {
-      for (int j = 0; ; j++) {
-        final name = tool.GetJerseyName(teamIdx, j);
-        if (name == null) break;
-        jerseys.add(name);
-      }
-    }
-    final curJersey = int.tryParse(t.defaultJersey) ?? 0;
-    final jerseyOpts = jerseys.asMap().entries.map((e) {
-      final sel = e.key == curJersey ? ' selected' : '';
-      return '<option value="${e.key}"$sel>${_esc(e.value)} (${e.key})</option>';
-    }).join();
-
-    // Stadium dropdown
-    final stadOpts = _kStadiums.map((s) {
-      final sel = s == t.stadium ? ' selected' : '';
-      return '<option value="${_esc(s)}"$sel>${_esc(s)}</option>';
-    }).join();
 
     // Playbook dropdown
-    final pbOpts = _kPlaybooks.map((p) {
+    final pbOpts = kPlaybookNames.map((p) {
       final sel = p == t.playbook ? ' selected' : '';
       return '<option value="${_esc(p)}"$sel>${_esc(p)}</option>';
     }).join();
@@ -338,100 +202,11 @@ class TeamDataEditorScreen {
     </div>
 
     <!-- ── Dropdown fields — natural-width cards on one row ── -->
-    <div class="attr-card dropdown-field" data-key="Stadium" style="width:220px;">
-      <div class="attr-card-label">Stadium</div>
-      <select class="pes-dropdown tde-dropdown" data-key="Stadium">$stadOpts</select>
-    </div>
     <div class="attr-card dropdown-field" data-key="Playbook">
       <div class="attr-card-label">Playbook</div>
       <select class="pes-dropdown tde-dropdown" data-key="Playbook">$pbOpts</select>
     </div>
-    <div class="attr-card dropdown-field" data-key="DefaultJersey">
-      <div class="attr-card-label">Default Jersey</div>
-      <select class="pes-dropdown tde-dropdown" data-key="DefaultJersey">
-        ${jerseyOpts.isEmpty
-            ? '<option value="${_esc(t.defaultJersey)}">${_esc(t.defaultJersey)}</option>'
-            : jerseyOpts}
-      </select>
-    </div>
-    ${_buildLogoDropdown(t.logo)}
 
-    ${_buildSpecialTeamsSection(t)}
-
-  </div>
-</div>''';
-  }
-
-  // ─── Special teams section ────────────────────────────────────────────────
-
-  static const _kStRoleLabels = [
-    ('KR1', 'Kick Returner 1'),
-    ('KR2', 'Kick Returner 2'),
-    ('PR',  'Punt Returner'),
-    ('LS',  'Long Snapper'),
-  ];
-
-  String _buildSpecialTeamsSection(TeamDataRow t) {
-    final stData = parseSpecialTeamsForTeam(_appState.textContent, t.team);
-
-    final sectionHeader = '''
-<div style="width:100%;flex-basis:100%;margin-top:4px;">
-  <div style="font-size:11px;font-weight:600;color:var(--color-muted);
-              text-transform:uppercase;letter-spacing:0.05em;
-              border-top:1px solid var(--color-border);
-              padding-top:12px;margin-bottom:8px;">
-    Special Teams
-  </div>''';
-
-    if (stData == null) {
-      // Option is off — show disabled dropdowns with a note
-      final disabledCards = _kStRoleLabels.map((r) => '''
-  <div class="attr-card dropdown-field" style="width:180px;">
-    <div class="attr-card-label">${r.$1}</div>
-    <select class="pes-dropdown" disabled><option>—</option></select>
-  </div>''').join('\n');
-
-      return '''
-$sectionHeader
-  <div style="font-size:11px;color:var(--color-muted);font-style:italic;margin-bottom:8px;">
-    Enable <b>Show Special Teams</b> in Options to edit these fields.
-  </div>
-  <div style="display:flex;flex-wrap:wrap;gap:8px;">
-$disabledCards
-  </div>
-</div>''';
-    }
-
-    // Build the option list once — shared across all 4 dropdowns
-    final optionsBuf = StringBuffer();
-    for (final opt in stData.rosterOptions) {
-      optionsBuf.write('<option value="${_esc(opt.posDepth)}">'
-          '${_esc(opt.posDepth)} \u2014 ${_esc(opt.displayName)}</option>');
-    }
-    final allOptions = optionsBuf.toString();
-
-    final dropdowns = _kStRoleLabels.map((r) {
-      final slot = stData.slots[r.$1];
-      final cur  = slot?.value ?? '';
-      // Inject selected attr into the matching option
-      final opts = allOptions.replaceFirst(
-          'value="${_esc(cur)}"',
-          'value="${_esc(cur)}" selected');
-      return '''
-  <div class="attr-card dropdown-field" style="width:180px;">
-    <div class="attr-card-label">${_esc(r.$2)}</div>
-    <select class="pes-dropdown tde-st-dropdown"
-            data-line="${slot?.lineIndex ?? -1}"
-            data-role="${_esc(r.$1)}">
-      $opts
-    </select>
-  </div>''';
-    }).join('\n');
-
-    return '''
-$sectionHeader
-  <div style="display:flex;flex-wrap:wrap;gap:8px;">
-$dropdowns
   </div>
 </div>''';
   }
@@ -443,26 +218,6 @@ $dropdowns
     value="${_esc(value)}">
 </div>''';
 
-  String _buildLogoDropdown(String curLogoStr) {
-    final curVal   = int.tryParse(curLogoStr) ?? 0;
-    final hasMatch = _kLogos.any((l) => l.value == curVal);
-    final buf = StringBuffer();
-    if (!hasMatch) {
-      buf.write('<option value="${_esc(curLogoStr)}" selected>(unknown: ${_esc(curLogoStr)})</option>');
-    }
-    bool selectedOnce = false;
-    for (final l in _kLogos) {
-      final doSelect = hasMatch && !selectedOnce && l.value == curVal;
-      if (doSelect) selectedOnce = true;
-      buf.write('<option value="${l.value}"${doSelect ? ' selected' : ''}>${_esc(l.name)}</option>');
-    }
-    return '''
-<div class="attr-card dropdown-field" data-key="Logo">
-  <div class="attr-card-label">Team Logo</div>
-  <select class="pes-dropdown tde-dropdown" data-key="Logo">${buf.toString()}</select>
-</div>''';
-  }
-
   // ─── Event wiring ─────────────────────────────────────────────────────────
 
   void _attachListeners() {
@@ -472,24 +227,28 @@ $dropdowns
       header?.addEventListener('change', (Event e) {
         final target = e.target as HTMLElement?;
         if (target == null || !target.classList.contains('pct-check')) return;
-        final team = target.dataset['team'];
-        if (team.isEmpty) return;
-        _togglePlayerControlled(team, (target as HTMLInputElement).checked);
+        final idx = int.tryParse(target.dataset['idx']) ?? -1;
+        if (idx < 0) return;
+        _togglePlayerControlled(idx, (target as HTMLInputElement).checked);
       }.toJS);
 
       (_container.querySelector('#tde-pct-toggle') as HTMLButtonElement?)
           ?.addEventListener('click', (Event _) {
         final tool = _appState.tool;
         if (tool == null) return;
-        final allChecked = GamesaveTool.Teams.every(tool.isTeamPlayerControlled);
-        if (allChecked) {
-          for (final team in GamesaveTool.Teams) {
-            tool.setTeamPlayerControlled(team, false);
+        
+        bool allChecked = true;
+        for (int i = 0; i < 32; i++) {
+          if (!tool.isTeamPlayerControlled(i)) {
+            allChecked = false;
+            break;
           }
-        } else {
-          tool.setAllTeamsPlayerControlled();
         }
-        _updatePlayerControlledLine();
+        
+        for (int i = 0; i < 32; i++) {
+          tool.setTeamPlayerControlled(i, !allChecked);
+        }
+        _updatePlayerControlledInText();
       }.toJS);
     }
 
@@ -505,38 +264,21 @@ $dropdowns
     _attachDetailListeners();
   }
 
-  void _togglePlayerControlled(String team, bool value) {
+  void _togglePlayerControlled(int teamIdx, bool value) {
     final tool = _appState.tool;
     if (tool == null) return;
-    tool.setTeamPlayerControlled(team, value);
-    _updatePlayerControlledLine();
+    tool.setTeamPlayerControlled(teamIdx, value);
+    _updatePlayerControlledInText();
   }
 
-  void _updatePlayerControlledLine() {
+  void _updatePlayerControlledInText() {
     final tool = _appState.tool;
     if (tool == null) return;
-    final newLines = tool.getPlayerControlledTeams()
-        .split('\n')
-        .where((l) => l.isNotEmpty)
-        .toList();
-    final lines = _appState.textContent.split('\n');
-    final out = <String>[];
-    bool replaced = false;
-    int i = 0;
-    while (i < lines.length) {
-      if (!replaced && lines[i].startsWith('PlayerControlled=')) {
-        out.addAll(newLines);
-        replaced = true;
-        i++;
-        while (i < lines.length && lines[i].startsWith('# PlayerControlledTeams=')) {
-          i++;
-        }
-      } else {
-        out.add(lines[i]);
-        i++;
-      }
-    }
-    _appState.textContent = out.join('\n');
+    
+    // For 2K4, we'll just re-generate the TeamData section in textContent
+    // because playercontrolled is now a column there.
+    _appState.textContent = _appState.buildTextContent(tool, _appState.options);
+    
     // Keep hash in sync so the re-render doesn't reset team selection
     _lastTextHash = _appState.textContent.hashCode;
     _appState.notify();
@@ -560,37 +302,6 @@ $dropdowns
       if (target == null || !target.classList.contains('tde-dropdown')) return;
       _writeField(target.dataset['key'], (target as HTMLSelectElement).value);
     }.toJS);
-
-    // Special teams dropdowns
-    detail.addEventListener('change', (Event e) {
-      final target = e.target as HTMLElement?;
-      if (target == null || !target.classList.contains('tde-st-dropdown')) return;
-      final lineIndex = int.tryParse(target.dataset['line']) ?? -1;
-      final role      = target.dataset['role'];
-      final value     = (target as HTMLSelectElement).value;
-      if (lineIndex >= 0 && role.isNotEmpty) _writeStSlot(lineIndex, role, value);
-    }.toJS);
-
-    // Numeric +/-
-    detail.addEventListener('click', (Event e) {
-      final target = e.target as HTMLElement?;
-      if (target == null) return;
-      final isInc = target.classList.contains('tde-inc');
-      final isDec = target.classList.contains('tde-dec');
-      if (!isInc && !isDec) return;
-      final key  = target.dataset['key'];
-      if (key.isEmpty) return;
-      final card = target.closest('.attr-card.numeric') as HTMLElement?;
-      if (card == null) return;
-      final minV = int.tryParse(card.dataset['min']) ?? 0;
-      final maxV = int.tryParse(card.dataset['max']) ?? 255;
-      final cur  = int.tryParse(
-          (card.querySelector('.numeric-value') as HTMLElement?)?.textContent ?? '0') ?? 0;
-      final next = (isInc ? cur + 1 : cur - 1).clamp(minV, maxV);
-      if (next == cur) return;
-      _writeField(key, next.toString());
-      _updateNumericCard(detail, key, next, minV, maxV);
-    }.toJS);
   }
 
   // ─── Selection ────────────────────────────────────────────────────────────
@@ -610,16 +321,6 @@ $dropdowns
     if (detail == null) return;
     detail.innerHTML = _buildDetailHtml().toJS;
     _attachDetailListeners();
-  }
-
-  void _updateNumericCard(HTMLElement root, String key, int newVal, int minV, int maxV) {
-    final card = root.querySelector('.attr-card.numeric[data-key="${_esc(key)}"]') as HTMLElement?;
-    if (card == null) return;
-    final valueEl = card.querySelector('.numeric-value') as HTMLElement?;
-    if (valueEl != null) valueEl.textContent = newVal.toString();
-    final pct = maxV > minV ? ((newVal - minV) / (maxV - minV) * 100).round() : 0;
-    final barEl = card.querySelector('.numeric-bar-fill') as HTMLElement?;
-    if (barEl != null) barEl.style.width = '$pct%';
   }
 
   // ─── Field write ──────────────────────────────────────────────────────────
@@ -643,14 +344,6 @@ $dropdowns
     if (key == 'Nickname' || key == 'Abbrev' || key == 'City') {
       _updateListItem(_selectedIdx);
     }
-  }
-
-  void _writeStSlot(int lineIndex, String role, String newValue) {
-    final lines = _appState.textContent.split('\n');
-    if (lineIndex < 0 || lineIndex >= lines.length) return;
-    lines[lineIndex] = '$role,$newValue';
-    _appState.textContent = lines.join('\n');
-    _lastTextHash = _appState.textContent.hashCode;
   }
 
   void _updateListItem(int idx) {

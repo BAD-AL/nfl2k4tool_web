@@ -270,12 +270,12 @@ int coachStringBytesUsed(List<CoachRow> coaches, List<String> headers) {
 }
 
 /// Total byte budget for all coach strings in the save file (UTF-16LE section).
-const int kCoachStringBudget = 0x14b1; // 5297 bytes
+const int kCoachStringBudget = 0x176c; // 5996 bytes
 
 /// Total character budget for coach strings.
 /// Since UTF-16LE encodes each character (and each null terminator) in 2 bytes,
 /// the character budget is exactly half the byte budget.
-const int kCoachStringCharBudget = kCoachStringBudget ~/ 2; // 2648
+const int kCoachStringCharBudget = kCoachStringBudget ~/ 2; // 2998
 
 /// Total characters used by all coach strings across [coaches].
 /// Divides the byte cost by 2 since UTF-16LE encodes each character in 2 bytes.
@@ -327,92 +327,6 @@ class TeamDataRow {
     }
   }
   return (headers: headers, teams: teams);
-}
-
-// ─── Special teams parse ──────────────────────────────────────────────────────
-
-const _kStRoles = {'KR1', 'KR2', 'PR', 'LS'};
-
-/// A single special-teams slot read from the text.
-class StSlot {
-  final String role;      // 'KR1', 'KR2', 'PR', 'LS'
-  final String value;     // e.g. 'WR6'
-  final int    lineIndex; // 0-based line index in the full text
-  const StSlot({required this.role, required this.value, required this.lineIndex});
-}
-
-/// A roster entry built from the team's player block.
-class StRosterOption {
-  final String posDepth;    // e.g. 'WR6'
-  final String displayName; // e.g. 'Smith, J.'
-  const StRosterOption({required this.posDepth, required this.displayName});
-}
-
-/// Parses special-teams slots and roster options for [teamName] from [text].
-///
-/// Returns null when [teamName] is not found in the text or has no ST lines
-/// (i.e. Show Special Teams is off).
-/// [slots] is keyed by role ('KR1', 'KR2', 'PR', 'LS').
-/// [rosterOptions] lists every player in depth-chart order with a posDepth label.
-({
-  Map<String, StSlot> slots,
-  List<StRosterOption> rosterOptions,
-})? parseSpecialTeamsForTeam(String text, String teamName) {
-  final lines  = text.split('\n');
-  final delim  = detectDelimiter(text);
-  final headers = parseActiveColumns(text);
-
-  final posIdx   = headers.indexOf('Position');
-  final fnameIdx = headers.indexOf('fname');
-  final lnameIdx = headers.indexOf('lname');
-
-  // Locate the team's block
-  final teamRe = RegExp(
-      r'^Team\s*=\s*' + RegExp.escape(teamName) + r'(\s|$)',
-      caseSensitive: false);
-  int blockStart = -1, blockEnd = lines.length;
-
-  for (int i = 0; i < lines.length; i++) {
-    final t = lines[i].trim();
-    if (blockStart < 0) {
-      if (teamRe.hasMatch(t)) blockStart = i;
-    } else if (RegExp(r'^Team\s*=', caseSensitive: false).hasMatch(t)) {
-      blockEnd = i;
-      break;
-    }
-  }
-  if (blockStart < 0) return null;
-
-  // Scan block for ST lines and player lines
-  final slots        = <String, StSlot>{};
-  final rosterOptions = <StRosterOption>[];
-  final depthCounts  = <String, int>{};
-
-  for (int i = blockStart + 1; i < blockEnd; i++) {
-    final trimmed = lines[i].trim();
-    if (trimmed.isEmpty || trimmed.startsWith('//') || trimmed.startsWith('#')) continue;
-
-    final fields     = splitCsv(trimmed, delim);
-    final firstField = fields.isNotEmpty ? fields[0].trim().toUpperCase() : '';
-
-    if (_kStRoles.contains(firstField) && fields.length >= 2) {
-      final value = fields[1].trim(); // e.g. 'WR6' (trim removes any \r)
-      slots[firstField] = StSlot(role: firstField, value: value, lineIndex: i);
-    } else if (posIdx >= 0 && fields.length > posIdx) {
-      final pos   = fields[posIdx].trim();
-      final fname = fnameIdx >= 0 && fields.length > fnameIdx ? fields[fnameIdx].trim() : '';
-      final lname = lnameIdx >= 0 && fields.length > lnameIdx ? fields[lnameIdx].trim() : '';
-      if (pos.isNotEmpty && !_kStRoles.contains(pos.toUpperCase())) {
-        final depth   = (depthCounts[pos] ?? 0) + 1;
-        depthCounts[pos] = depth;
-        final name = lname.isNotEmpty ? '$lname, $fname' : fname;
-        rosterOptions.add(StRosterOption(posDepth: '$pos$depth', displayName: name));
-      }
-    }
-  }
-
-  if (slots.isEmpty) return null;
-  return (slots: slots, rosterOptions: rosterOptions);
 }
 
 // ─── In-place field editing ───────────────────────────────────────────────────

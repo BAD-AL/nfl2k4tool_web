@@ -327,7 +327,7 @@ ${_buildAttrTabBarHtml()}
           if (attr.key == 'Height') {
             opts = kHeightOptions;
           } else if (attr.key == 'College') {
-            opts = _appState.tool?.GetColleges() ?? _colleges;
+            opts = _colleges;
           } else {
             opts = attr.options;
           }

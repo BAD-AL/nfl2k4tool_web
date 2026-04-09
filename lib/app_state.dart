@@ -1,4 +1,4 @@
-import 'package:nfl2k5tool_dart/nfl2k5tool_dart.dart';
+import 'package:nfl2k4tool_dart/nfl2k4tool_dart.dart';
 import 'data/app_options.dart';
 import 'data/text_parser.dart';
 
@@ -6,8 +6,7 @@ enum NavSection { options, players, schedule, coaches, teamData, textEditor }
 
 class AppState {
   // File state
-  SaveSession? session;
-  GamesaveTool? tool;
+  NFL2K4Gamesave? tool;
   String textContent = '';
   String? fileName;
   String? fileType; // 'FRANCHISE' | 'ROSTER' | null
@@ -42,38 +41,50 @@ class AppState {
   }
 
   // §15.8 Text content construction
-  String buildTextContent(GamesaveTool t, AppOptions opts) {
+  String buildTextContent(NFL2K4Gamesave t, AppOptions opts) {
     final buf = StringBuffer();
-    if (opts.showPlayers || opts.showFreeAgents || opts.showDraftClass) {
-      buf.write(t.GetKey(opts.showAttributes, opts.showAppearance));
-      buf.write('\n');
+
+    RosterKey key;
+    if (opts.showAttributes && opts.showAppearance) {
+      key = RosterKey.all;
+    } else if (opts.showAttributes) {
+      key = RosterKey.abilities;
+    } else if (opts.showAppearance) {
+      key = RosterKey.appearance;
+    } else {
+      key = const RosterKey(['Position', 'fname', 'lname', 'JerseyNumber']);
     }
-    buf.write('\n# Uncomment line below to Set Salary Cap -> 198.2M\n');
-    buf.write('# SET(0x9ACCC, 0x38060300)\n\n');
+
+    //if (opts.showPlayers || opts.showFreeAgents || opts.showDraftClass) {
+    //  buf.write('#');
+    //  buf.write(key.fields.join(','));
+    //  buf.write('\n');
+    //}
+
+    //buf.write('\n# Uncomment line below to Set Salary Cap -> 198.2M\n');
+    //buf.write('# SET(0x9ACCC, 0x38060300)\n\n');
+
     if (opts.showPlayers) {
-      buf.write(t.GetLeaguePlayers(
-          opts.showAttributes, opts.showAppearance, opts.showSpecialTeams));
+      buf.write(t.toText(key));
     }
     if (opts.showFreeAgents) {
-      buf.write(t.GetTeamPlayers(
-          'FreeAgents', opts.showAttributes, opts.showAppearance, false));
+      buf.write(t.toText(key, teamIndex: -1));
     }
-    if (opts.showDraftClass) {
-      buf.write(t.GetTeamPlayers(
-          'DraftClass', opts.showAttributes, opts.showAppearance, false));
-    }
+    // NFL 2K4 doesn't have a dedicated 'DraftClass' section like 2K5,
+    // but the last team slots are often used for it.
+    // For now we'll skip special DraftClass logic if not found.
+
     if (opts.showCoaches) {
-      t.CoachKey = t.CoachKeyAll; // always use full key
-      buf.write(t.GetCoachDataAll());
+      buf.write(t.toCoachDataText());
     }
     if (opts.showTeamData) {
       buf.write('\n\n');
-      if (t.saveType == SaveType.Franchise) buf.write(t.getPlayerControlledTeams());
-      buf.write(t.GetTeamDataAll());
+      // In 2K4, player-controlled info is part of toTeamDataText() for franchise saves.
+      buf.write(t.toTeamDataText());
     }
-    if (opts.showSchedule && t.saveType == SaveType.Franchise) {
+    if (opts.showSchedule && t.isFranchise) {
       buf.write('\n\n#Schedule\n');
-      buf.write(t.GetSchedule());
+      buf.write(scheduleToText(t.getSchedule()));
     }
     if (opts.autoUpdateDepthCharts) buf.write('\nAutoUpdateDepthChart');
     if (opts.autoUpdatePhotos) buf.write('\nAutoUpdatePhoto');

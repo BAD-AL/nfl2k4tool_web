@@ -1,5 +1,5 @@
-name: nfl2k5tool_web
-description: NFL2K5Tool single-page web app
+name: nfl2k4tool_web
+description: NFL2K4Tool single-page web app
 version: 1.0.1
 publish_to: none
 
@@ -9,9 +9,9 @@ environment:
 dependencies:
   web: ^1.1.0
   archive: ^3.6.1
-  nfl2k5tool_dart:
+  nfl2k4tool_dart:
     git:
-      url: https://github.com/BAD-AL/nfl2k5tool_dart.git
+      url: https://github.com/BAD-AL/nfl2k4tool_dart.git
       ref: main
 
 dev_dependencies:

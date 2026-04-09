@@ -1,7 +1,7 @@
 import 'dart:js_interop';
 import 'dart:typed_data';
 import 'package:web/web.dart';
-import 'package:nfl2k5tool_dart/nfl2k5tool_dart.dart';
+import 'package:nfl2k4tool_dart/nfl2k4tool_dart.dart';
 
 import 'app_state.dart';
 import 'data/player_data_cache.dart';
@@ -34,7 +34,7 @@ void main() {
 
   // Stamp version into the status bar
   (document.getElementById('status-version') as HTMLElement?)
-      ?.textContent = 'NFL2K5Tool Web v$appVersion';
+      ?.textContent = 'NFL2K4Tool Web v$appVersion';
 
   // Restore persisted state
   _restoreTheme();
@@ -161,29 +161,29 @@ void _readSelectedFile(HTMLInputElement input) {
   });
 }
 
-/// Decodes [bytes] into a [SaveSession] based on the file extension in [name].
-SaveSession _loadFromBytes(Uint8List bytes, String name) {
+/// Decodes [bytes] into a [NFL2K4Gamesave] based on the file extension in [name].
+NFL2K4Gamesave _loadFromBytes(Uint8List bytes, String name) {
   final n = name.toLowerCase();
-  if (n.endsWith('.zip'))              return SaveSession.fromXboxZip(bytes);
-  if (n.endsWith('.dat'))              return SaveSession.fromRawDat(bytes);
-  if (n.endsWith('.img') || n.endsWith('.bin')) { return SaveSession.fromXboxMU(bytes); }
-  if (n.endsWith('.max') || n.endsWith('.psu')) { return SaveSession.fromPs2Save(bytes); }
-  if (n.endsWith('.ps2'))              return SaveSession.fromPs2Card(bytes);
-  throw Exception('Unsupported file extension.');
+  if (n.endsWith('.max') || n.endsWith('.psu')) {
+    return NFL2K4Gamesave.fromPs2Save(bytes);
+  }
+  if (n.endsWith('.ps2')) {
+    return NFL2K4Gamesave.fromPs2Card(bytes);
+  }
+  if (n.endsWith('.img') || n.endsWith('.bin')) {
+    return NFL2K4Gamesave.fromXboxMU(bytes);
+  }
+  return NFL2K4Gamesave.fromBytes(bytes);
 }
 
 void _loadBytes(Uint8List bytes, String name) {
   try {
-    final session = _loadFromBytes(bytes, name);
+    final tool = _loadFromBytes(bytes, name);
 
-    final tool = session.engine;
-    appState.session = session;
     appState.tool = tool;
     appState.fileName = name;
-    appState.fileType =
-        tool.saveType == SaveType.Franchise ? 'FRANCHISE' : 'ROSTER';
-    appState.textContent =
-        appState.buildTextContent(tool, appState.options);
+    appState.fileType = tool.isFranchise ? 'FRANCHISE' : 'ROSTER';
+    appState.textContent = appState.buildTextContent(tool, appState.options);
     appState.refreshCounts();
     appState.notify();
     statusBar.showMessage('Loaded: $name');
@@ -202,29 +202,29 @@ typedef _ExportFmt = ({String label, String ext});
 List<_ExportFmt> _allowedExportFormats(String fileName) {
   final n = fileName.toLowerCase();
   final isXbox = n.endsWith('.zip') || n.endsWith('.bin') || n.endsWith('.img');
-  final isPs2  = n.endsWith('.ps2') || n.endsWith('.max') || n.endsWith('.psu');
-  final isDat  = n.endsWith('.dat');
+  final isPs2 = n.endsWith('.ps2') || n.endsWith('.max') || n.endsWith('.psu');
+  final isDat = n.endsWith('.dat');
 
   if (isXbox) {
     return [
-      (label: 'Xbox Zip (.zip)',                        ext: '.zip'),
-      (label: 'Xbox Memory Unit (.bin) — new card',     ext: '.bin'),
-      (label: 'Xbox Memory Unit (.img) — new card',     ext: '.img'),
-      (label: 'PS2 Max (.max)',                         ext: '.max'),
-      (label: 'PS2 PSU (.psu)',                         ext: '.psu'),
-      (label: 'PS2 Memory Card (.ps2) — new card',      ext: '.ps2'),
-      (label: 'Raw DAT (.dat)',                         ext: '.dat'),
+      (label: 'Xbox Zip (.zip)', ext: '.zip'),
+      (label: 'Xbox Memory Unit (.bin) — new card', ext: '.bin'),
+      (label: 'Xbox Memory Unit (.img) — new card', ext: '.img'),
+      (label: 'PS2 Max (.max)', ext: '.max'),
+      (label: 'PS2 PSU (.psu)', ext: '.psu'),
+      (label: 'PS2 Memory Card (.ps2) — new card', ext: '.ps2'),
+      (label: 'Raw DAT (.dat)', ext: '.dat'),
     ];
   } else if (isPs2) {
     return [
-      (label: 'PS2 Max (.max)',                         ext: '.max'),
-      (label: 'PS2 PSU (.psu)',                         ext: '.psu'),
-      (label: 'PS2 Memory Card (.ps2) — new card',      ext: '.ps2'),
-      (label: 'Raw DAT (.dat)',                         ext: '.dat'),
+      (label: 'PS2 Max (.max)', ext: '.max'),
+      (label: 'PS2 PSU (.psu)', ext: '.psu'),
+      (label: 'PS2 Memory Card (.ps2) — new card', ext: '.ps2'),
+      (label: 'Raw DAT (.dat)', ext: '.dat'),
     ];
   } else if (isDat) {
     return [
-      (label: 'Raw DAT (.dat)',                         ext: '.dat'),
+      (label: 'Raw DAT (.dat)', ext: '.dat'),
     ];
   }
   return [(label: 'Raw DAT (.dat)', ext: '.dat')];
@@ -233,15 +233,16 @@ List<_ExportFmt> _allowedExportFormats(String fileName) {
 void _showExportDialog() {
   if (!appState.hasFile) return;
 
-  final loaded   = appState.fileName ?? 'export';
+  final loaded = appState.fileName ?? 'export';
   final baseName = loaded.contains('.')
       ? loaded.substring(0, loaded.lastIndexOf('.'))
       : loaded;
-  final formats  = _allowedExportFormats(loaded);
+  final formats = _allowedExportFormats(loaded);
 
-  final fmtButtons = formats.map((f) =>
-    '<button class="text-sidebar-btn exp-fmt" data-ext="${f.ext}">${f.label}</button>'
-  ).join('\n');
+  final fmtButtons = formats
+      .map((f) =>
+          '<button class="text-sidebar-btn exp-fmt" data-ext="${f.ext}">${f.label}</button>')
+      .join('\n');
 
   final overlay = HTMLDivElement()..className = 'dialog-overlay';
   overlay.innerHTML = '''
@@ -267,28 +268,43 @@ void _showExportDialog() {
   <div class="dialog-footer">
     <button class="btn btn-outlined" id="exp-cancel">Cancel</button>
   </div>
-</div>'''.toJS;
+</div>'''
+      .toJS;
 
   document.body!.append(overlay);
 
-  void close() { overlay.remove(); }
+  void close() {
+    overlay.remove();
+  }
 
-  overlay.querySelector('#exp-close')?.addEventListener('click',  (Event _) { close(); }.toJS);
-  overlay.querySelector('#exp-cancel')?.addEventListener('click', (Event _) { close(); }.toJS);
+  overlay
+      .querySelector('#exp-close')
+      ?.addEventListener('click', (Event _) {
+        close();
+      }.toJS);
+  overlay
+      .querySelector('#exp-cancel')
+      ?.addEventListener('click', (Event _) {
+        close();
+      }.toJS);
   overlay.addEventListener('click', (Event e) {
     if ((e.target as HTMLElement?) == overlay) close();
   }.toJS);
   (overlay.firstElementChild as HTMLElement?)
-      ?.addEventListener('click', (Event e) { e.stopPropagation(); }.toJS);
+      ?.addEventListener('click', (Event e) {
+    e.stopPropagation();
+  }.toJS);
 
   final fmtBtns = overlay.querySelectorAll('.exp-fmt');
   for (var i = 0; i < fmtBtns.length; i++) {
     final btn = fmtBtns.item(i) as HTMLElement;
     btn.addEventListener('click', (Event _) {
-      final ext       = btn.dataset['ext'];
-      final nameInput = overlay.querySelector('#exp-filename') as HTMLInputElement?;
-      final base      = nameInput?.value.trim();
-      final filename  = '${base != null && base.isNotEmpty ? base : baseName}$ext';
+      final ext = btn.dataset['ext'];
+      final nameInput =
+          overlay.querySelector('#exp-filename') as HTMLInputElement?;
+      final base = nameInput?.value.trim();
+      final filename =
+          '${base != null && base.isNotEmpty ? base : baseName}$ext';
       close();
       _exportAs(filename);
     }.toJS);
@@ -313,32 +329,31 @@ void _showExportDialog() {
 /// Applies text to binary and downloads the file.
 /// [name] must include the extension — the extension determines the format.
 void _exportAs(String name) {
-  final session = appState.session;
   final tool = appState.tool;
-  if (session == null || tool == null) return;
+  if (tool == null) return;
 
-  InputParser(tool).ProcessText(appState.textContent);
+  InputParser(tool).applyText(appState.textContent);
 
   final n = name.toLowerCase();
   try {
     Uint8List? bytes;
     if (n.endsWith('.zip')) {
-      bytes = session.exportToXboxZip();
+      bytes = tool.toZipBytes();
     } else if (n.endsWith('.dat')) {
-      bytes = tool.GameSaveData;
+      bytes = tool.toBytes();
     } else if (n.endsWith('.max')) {
-      bytes = session.exportToPs2Max();
+      bytes = tool.toPs2MaxBytes();
     } else if (n.endsWith('.psu')) {
-      bytes = session.exportToPs2Psu();
+      bytes = tool.toPs2PsuBytes();
     } else if (n.endsWith('.ps2')) {
-      bytes = session.injectIntoPs2Card();
+      bytes = tool.toPs2CardBytes();
     } else if (n.endsWith('.bin') || n.endsWith('.img')) {
-      bytes = session.injectIntoXboxMU();
+      bytes = tool.toXboxMUBytes();
     } else {
       statusBar.showMessage('Export not supported for this format');
       return;
     }
-    if (bytes == null) {
+    if (bytes.isEmpty) {
       statusBar.showMessage('Export failed: no data');
       return;
     }

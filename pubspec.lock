@@ -394,13 +394,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.6"
-  nfl2k5tool_dart:
+  nfl2k4tool_dart:
     dependency: "direct main"
     description:
       path: "."
       ref: main
-      resolved-ref: e268f5b60a2a42d41ece8e2af0dfdd93fa6df878
-      url: "https://github.com/BAD-AL/nfl2k5tool_dart.git"
+      resolved-ref: a4b36f150bf096e7028ea10585dfc3ba5c5bfc13
+      url: "https://github.com/BAD-AL/nfl2k4tool_dart.git"
     source: git
     version: "1.0.0"
   node_preamble:

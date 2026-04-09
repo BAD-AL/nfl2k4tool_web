@@ -92,11 +92,11 @@ final List<AttrGroup> kAttrGroups = [
   AttrGroup(tabLabel: 'Appearance', attrs: [
     AttrDef(
       key: 'BodyType', label: 'Body Type', type: AttrType.dropdown,
-      options: ['Skinny', 'Normal', 'Large', 'ExtraLarge'],
+      options: ['Skinny', 'Normal', 'ExtraLarge', 'Large'],
     ),
     AttrDef(
       key: 'Skin', label: 'Skin', type: AttrType.dropdown,
-      options: [for (int i = 1; i <= 22; i++) 'Skin$i'],
+      options: [for (int i = 1; i <= 6; i++) 'Skin$i'],
     ),
     AttrDef(
       key: 'Face', label: 'Face', type: AttrType.dropdown,
@@ -112,7 +112,7 @@ final List<AttrGroup> kAttrGroups = [
     ),
     AttrDef(
       key: 'FaceMask', label: 'Face Mask', type: AttrType.dropdown,
-      options: [for (int i = 1; i <= 27; i++) 'FaceMask$i'],
+      options: [for (int i = 1; i <= 32; i++) 'FaceMask$i'],
     ),
     AttrDef(
       key: 'Visor', label: 'Visor', type: AttrType.dropdown,

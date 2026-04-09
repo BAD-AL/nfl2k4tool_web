@@ -1,6 +1,6 @@
 import 'dart:js_interop';
 import 'dart:typed_data';
-import 'package:nfl2k5tool_dart/nfl2k5tool_dart.dart' show DataMap;
+import 'package:nfl2k4tool_dart/nfl2k4tool_dart.dart' show DataMap;
 import 'package:web/web.dart';
 
 import '../data/player_data_cache.dart';

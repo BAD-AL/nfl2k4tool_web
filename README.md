@@ -1,10 +1,12 @@
-# NFL2K5Tool Web
+# NFL2K4Tool Web
 
-A browser-based editor for NFL 2K5 gamesave files. Load a save, edit players, schedules, and coaches, then export back to your console format — no installation required.
+Fork of [NFL2K5tool_web](https://bad-al.github.io/nfl2k5tool_web/)
 
-![NFL2K5Tool Web](nfl2k5tool_web.png)
+A browser-based editor for NFL 2K4 gamesave files. Load a save, edit players, schedules, and coaches, then export back to your console format — no installation required.
 
-Try it now: https://BAD-AL.github.io/nfl2k5tool_web/
+![NFL2K4Tool Web](nfl2k4tool_web.png)
+
+Try it now: https://BAD-AL.github.io/nfl2k4tool_web/
 
 ---
 
@@ -49,7 +51,7 @@ Try it now: https://BAD-AL.github.io/nfl2k5tool_web/
 
 ## Dependencies
 
-- [nfl2k5tool_dart](https://github.com/BAD-AL/nfl2k5tool_dart) — binary decode/encode engine
+- [nfl2k4tool_dart](https://github.com/BAD-AL/nfl2k4tool_dart) — binary decode/encode engine
 - [archive](https://pub.dev/packages/archive) — ZIP handling for the photo library
 - [web](https://pub.dev/packages/web) — Dart browser bindings
 
@@ -59,13 +61,14 @@ Try it now: https://BAD-AL.github.io/nfl2k5tool_web/
 
 - No data is sent to any server — everything runs locally in the browser.
 - The 'Dart' programming language was chosen because of it's modern Object-Oriented design and it's versatility. Dart can be used as a scripting language, compiled to an executable file [Windows, Linux, Mac, iOS, Android], or run in a web browser (compiled to WASM or JavaScript).
-- Claude Code was used in the creation of this app, check 'Spec' folder for initial prompts.
+- Claude Code and Gemini were used in the creation of this app.
 - For local / offline use check out the `docs/` folder
 
 ## Related projects
 - https://github.com/BAD-AL/NFL2K5Tool
 - https://github.com/BAD-AL/dart_mymc 
 - https://github.com/BAD-AL/xbox_memory_unit_tool
-- https://github.com/BAD-AL/nfl2k5tool_dart
+- https://github.com/BAD-AL/nfl2k4tool_dart
+- https://github.com/BAD-AL/nfl2k5tool_web
 
 

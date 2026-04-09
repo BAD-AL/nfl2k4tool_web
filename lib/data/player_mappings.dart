@@ -1,5 +1,4 @@
-import 'package:nfl2k5tool_dart/nfl2k5tool_dart.dart' show DataMap;
-import 'package:nfl2k5tool_dart/enf_photo_index.dart' show kEnfPhotoIndexContent;
+import 'package:nfl2k4tool_dart/nfl2k4tool_dart.dart' show DataMap;
 
 /// A display entry for a mapped ID field (Photo or PBP).
 class MappedEntry {
@@ -8,13 +7,11 @@ class MappedEntry {
   const MappedEntry(this.id, this.name);
 }
 
-/// Photo ID → player name, parsed from `kEnfPhotoIndexContent`.
-/// Format per line: `"Last, First=NNNN"`
-final List<MappedEntry> photoOptions = _parsePhotoIndex();
+/// Photo ID → player name, parsed from ReversePhotoMap.
+final List<MappedEntry> photoOptions = _getPhotoOptions();
 
 String photoIdToDisplayName(String id) =>
-    photoOptions.firstWhere((e) => e.id == id,
-        orElse: () => MappedEntry(id, '')).name;
+    DataMap.ReversePhotoMap[id] ?? DataMap.ReversePhotoMap[id.padLeft(4, '0')] ?? '';
 
 /// Returns the display name for a PBP ID using DataMap.ReversePBPMap.
 String pbpIdToDisplayName(String id) =>
@@ -22,17 +19,8 @@ String pbpIdToDisplayName(String id) =>
 
 // ─── Parsers ──────────────────────────────────────────────────────────────────
 
-List<MappedEntry> _parsePhotoIndex() {
-  final entries = <MappedEntry>[];
-  for (final line in kEnfPhotoIndexContent.split('\n')) {
-    final t = line.trim();
-    if (t.isEmpty) continue;
-    final eq = t.indexOf('=');
-    if (eq < 0) continue;
-    final name = t.substring(0, eq).trim();
-    final id   = t.substring(eq + 1).trim();
-    if (id.isNotEmpty) entries.add(MappedEntry(id, name));
-  }
-  return entries;
+List<MappedEntry> _getPhotoOptions() {
+  final map = DataMap.ReversePhotoMap;
+  return map.entries.map((e) => MappedEntry(e.key, e.value)).toList();
 }
 

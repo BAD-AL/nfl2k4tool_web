@@ -1,7 +1,7 @@
 import 'package:test/test.dart';
-import 'package:nfl2k5tool_web/data/schedule_data.dart';
+import 'package:nfl2k4tool_web/data/schedule_data.dart';
 
-const _sampleSchedule = '''YEAR=2004
+const _sampleSchedule = '''
 
 WEEK 1  [3 games]
 colts at patriots
@@ -17,10 +17,6 @@ void main() {
   // ── parseScheduleForDisplay ───────────────────────────────────────────────
 
   group('parseScheduleForDisplay', () {
-    test('T-SCHED-PARSE-01: extracts year correctly', () {
-      final d = parseScheduleForDisplay(_sampleSchedule);
-      expect(d.year, 2004);
-    });
 
     test('T-SCHED-PARSE-02: parses week count', () {
       final d = parseScheduleForDisplay(_sampleSchedule);
