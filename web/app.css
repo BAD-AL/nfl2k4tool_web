@@ -387,6 +387,78 @@ body {
   color: var(--color-muted);
 }
 
+/* Section header expanded variant for player-controlled checkboxes */
+.section-header--pct {
+  height: auto;
+  min-height: 44px;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 6px 16px;
+  gap: 4px;
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pct-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-bottom: 2px;
+}
+
+.pct-label {
+  font-size: 11px;
+  color: var(--color-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pct-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+}
+
+.pct-cb {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  cursor: pointer;
+  color: var(--color-text);
+  user-select: none;
+}
+
+.pct-cb input[type="checkbox"] {
+  width: 11px;
+  height: 11px;
+  cursor: pointer;
+  accent-color: var(--color-gold);
+  margin: 0;
+}
+
+.pct-btn {
+  font-size: 10px;
+  padding: 2px 7px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-chip);
+  color: var(--color-text);
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.pct-btn:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+
 .player-editor-body {
   display: flex;
   flex: 1;
@@ -1404,7 +1476,7 @@ body {
 
 .text-area-wrap {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   position: relative;
 }
 
@@ -1644,6 +1716,37 @@ body {
   padding: 12px 16px;
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
+}
+
+/* Other Links modal */
+.other-link-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 16px;
+  text-decoration: none;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  transition: background 120ms;
+}
+
+.other-link-row:last-child {
+  border-bottom: none;
+}
+
+.other-link-row:hover {
+  background: var(--color-active-bg);
+}
+
+.other-link-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.other-link-url {
+  font-size: 11px;
+  color: var(--color-muted);
+  word-break: break-all;
 }
 
 /* Face picker */

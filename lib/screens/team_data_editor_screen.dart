@@ -1,9 +1,22 @@
 import 'dart:js_interop';
 import 'package:web/web.dart';
-import 'package:nfl2k5tool_dart/nfl2k5tool_dart.dart' show GamesaveTool;
+import 'package:nfl2k5tool_dart/nfl2k5tool_dart.dart' show GamesaveTool, SaveType;
 
 import '../app_state.dart';
 import '../data/text_parser.dart';
+
+// ─── Team abbreviation map (full name → 2-3 letter abbrev) ───────────────────
+
+const _kTeamAbbrevs = {
+  '49ers':      'SF',  'Bears':     'CHI', 'Bengals':   'CIN', 'Bills':     'BUF',
+  'Broncos':    'DEN', 'Browns':    'CLE', 'Buccaneers':'TB',  'Cardinals': 'ARI',
+  'Chargers':   'SD',  'Chiefs':    'KC',  'Colts':     'IND', 'Cowboys':   'DAL',
+  'Dolphins':   'MIA', 'Eagles':    'PHI', 'Falcons':   'ATL', 'Giants':    'NYG',
+  'Jaguars':    'JAX', 'Jets':      'NYJ', 'Lions':     'DET', 'Packers':   'GB',
+  'Panthers':   'CAR', 'Patriots':  'NE',  'Raiders':   'OAK', 'Rams':      'STL',
+  'Ravens':     'BAL', 'Redskins':  'WAS', 'Saints':    'NO',  'Seahawks':  'SEA',
+  'Steelers':   'PIT', 'Texans':    'HOU', 'Titans':    'TEN', 'Vikings':   'MIN',
+};
 
 // ─── XSS escape ───────────────────────────────────────────────────────────────
 
@@ -193,12 +206,16 @@ class TeamDataEditorScreen {
   // ─── Full DOM build ───────────────────────────────────────────────────────
 
   void _renderFull() {
+    final isFranchise = _appState.isFranchise;
     _container.innerHTML = '''
 <div class="player-editor">
-  <div class="section-header">
-    <span class="material-symbols-outlined section-icon">shield</span>
-    <span class="section-title">Team Data Editor</span>
-    <span class="section-subtitle">${_teams.length} teams</span>
+  <div class="section-header${isFranchise ? ' section-header--pct' : ''}">
+    <div class="section-header-row">
+      <span class="material-symbols-outlined section-icon">shield</span>
+      <span class="section-title">Team Data Editor</span>
+      <span class="section-subtitle">${_teams.length} teams</span>
+    </div>
+    ${isFranchise ? _buildPctHtml() : ''}
   </div>
   <div class="player-editor-body">
     <div class="player-list-panel" id="tde-list-panel">
@@ -211,6 +228,27 @@ class TeamDataEditorScreen {
 </div>'''.toJS;
 
     _attachListeners();
+  }
+
+  String _buildPctHtml() {
+    final tool = _appState.tool;
+    if (tool == null) return '';
+    final allChecked = GamesaveTool.Teams.every(tool.isTeamPlayerControlled);
+    final btnLabel   = allChecked ? 'Uncheck All' : 'Check All';
+    final buf = StringBuffer();
+    buf.write('<div class="pct-row">'
+        '<span class="pct-label">Player Controlled:</span>'
+        '<button id="tde-pct-toggle" class="pct-btn">$btnLabel</button>'
+        '<div class="pct-checkboxes">');
+    for (final team in GamesaveTool.Teams) {
+      final abbrev = _kTeamAbbrevs[team] ?? team.substring(0, 3).toUpperCase();
+      final checked = tool.isTeamPlayerControlled(team) ? ' checked' : '';
+      buf.write('<label class="pct-cb" title="${_esc(team)}">'
+          '<input type="checkbox" class="pct-check" data-team="${_esc(team)}"$checked>'
+          '<span>${_esc(abbrev)}</span></label>');
+    }
+    buf.write('</div></div>');
+    return buf.toString();
   }
 
   // ─── List panel ───────────────────────────────────────────────────────────
@@ -318,6 +356,82 @@ class TeamDataEditorScreen {
     </div>
     ${_buildLogoDropdown(t.logo)}
 
+    ${_buildSpecialTeamsSection(t)}
+
+  </div>
+</div>''';
+  }
+
+  // ─── Special teams section ────────────────────────────────────────────────
+
+  static const _kStRoleLabels = [
+    ('KR1', 'Kick Returner 1'),
+    ('KR2', 'Kick Returner 2'),
+    ('PR',  'Punt Returner'),
+    ('LS',  'Long Snapper'),
+  ];
+
+  String _buildSpecialTeamsSection(TeamDataRow t) {
+    final stData = parseSpecialTeamsForTeam(_appState.textContent, t.team);
+
+    final sectionHeader = '''
+<div style="width:100%;flex-basis:100%;margin-top:4px;">
+  <div style="font-size:11px;font-weight:600;color:var(--color-muted);
+              text-transform:uppercase;letter-spacing:0.05em;
+              border-top:1px solid var(--color-border);
+              padding-top:12px;margin-bottom:8px;">
+    Special Teams
+  </div>''';
+
+    if (stData == null) {
+      // Option is off — show disabled dropdowns with a note
+      final disabledCards = _kStRoleLabels.map((r) => '''
+  <div class="attr-card dropdown-field" style="width:180px;">
+    <div class="attr-card-label">${r.$1}</div>
+    <select class="pes-dropdown" disabled><option>—</option></select>
+  </div>''').join('\n');
+
+      return '''
+$sectionHeader
+  <div style="font-size:11px;color:var(--color-muted);font-style:italic;margin-bottom:8px;">
+    Enable <b>Show Special Teams</b> in Options to edit these fields.
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+$disabledCards
+  </div>
+</div>''';
+    }
+
+    // Build the option list once — shared across all 4 dropdowns
+    final optionsBuf = StringBuffer();
+    for (final opt in stData.rosterOptions) {
+      optionsBuf.write('<option value="${_esc(opt.posDepth)}">'
+          '${_esc(opt.posDepth)} \u2014 ${_esc(opt.displayName)}</option>');
+    }
+    final allOptions = optionsBuf.toString();
+
+    final dropdowns = _kStRoleLabels.map((r) {
+      final slot = stData.slots[r.$1];
+      final cur  = slot?.value ?? '';
+      // Inject selected attr into the matching option
+      final opts = allOptions.replaceFirst(
+          'value="${_esc(cur)}"',
+          'value="${_esc(cur)}" selected');
+      return '''
+  <div class="attr-card dropdown-field" style="width:180px;">
+    <div class="attr-card-label">${_esc(r.$2)}</div>
+    <select class="pes-dropdown tde-st-dropdown"
+            data-line="${slot?.lineIndex ?? -1}"
+            data-role="${_esc(r.$1)}">
+      $opts
+    </select>
+  </div>''';
+    }).join('\n');
+
+    return '''
+$sectionHeader
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+$dropdowns
   </div>
 </div>''';
   }
@@ -352,6 +466,33 @@ class TeamDataEditorScreen {
   // ─── Event wiring ─────────────────────────────────────────────────────────
 
   void _attachListeners() {
+    // Player controlled checkboxes + toggle button (franchise only)
+    if (_appState.isFranchise) {
+      final header = _container.querySelector('.section-header') as HTMLElement?;
+      header?.addEventListener('change', (Event e) {
+        final target = e.target as HTMLElement?;
+        if (target == null || !target.classList.contains('pct-check')) return;
+        final team = target.dataset['team'];
+        if (team.isEmpty) return;
+        _togglePlayerControlled(team, (target as HTMLInputElement).checked);
+      }.toJS);
+
+      (_container.querySelector('#tde-pct-toggle') as HTMLButtonElement?)
+          ?.addEventListener('click', (Event _) {
+        final tool = _appState.tool;
+        if (tool == null) return;
+        final allChecked = GamesaveTool.Teams.every(tool.isTeamPlayerControlled);
+        if (allChecked) {
+          for (final team in GamesaveTool.Teams) {
+            tool.setTeamPlayerControlled(team, false);
+          }
+        } else {
+          tool.setAllTeamsPlayerControlled();
+        }
+        _updatePlayerControlledLine();
+      }.toJS);
+    }
+
     // List selection
     final listPanel = _container.querySelector('#tde-list-panel') as HTMLElement?;
     listPanel?.addEventListener('click', (Event e) {
@@ -362,6 +503,43 @@ class TeamDataEditorScreen {
     }.toJS);
 
     _attachDetailListeners();
+  }
+
+  void _togglePlayerControlled(String team, bool value) {
+    final tool = _appState.tool;
+    if (tool == null) return;
+    tool.setTeamPlayerControlled(team, value);
+    _updatePlayerControlledLine();
+  }
+
+  void _updatePlayerControlledLine() {
+    final tool = _appState.tool;
+    if (tool == null) return;
+    final newLines = tool.getPlayerControlledTeams()
+        .split('\n')
+        .where((l) => l.isNotEmpty)
+        .toList();
+    final lines = _appState.textContent.split('\n');
+    final out = <String>[];
+    bool replaced = false;
+    int i = 0;
+    while (i < lines.length) {
+      if (!replaced && lines[i].startsWith('PlayerControlled=')) {
+        out.addAll(newLines);
+        replaced = true;
+        i++;
+        while (i < lines.length && lines[i].startsWith('# PlayerControlledTeams=')) {
+          i++;
+        }
+      } else {
+        out.add(lines[i]);
+        i++;
+      }
+    }
+    _appState.textContent = out.join('\n');
+    // Keep hash in sync so the re-render doesn't reset team selection
+    _lastTextHash = _appState.textContent.hashCode;
+    _appState.notify();
   }
 
   void _attachDetailListeners() {
@@ -376,17 +554,21 @@ class TeamDataEditorScreen {
       _writeField(key, target.value);
     }.toJS);
 
-    // Dropdowns
+    // Team data dropdowns
     detail.addEventListener('change', (Event e) {
       final target = e.target as HTMLElement?;
       if (target == null || !target.classList.contains('tde-dropdown')) return;
-      final key = target.dataset['key'];
-      final value = (target as HTMLSelectElement).value;
-      if (key == 'DefaultJersey') {
-        _writeField(key, value);
-      } else {
-        _writeField(key, value);
-      }
+      _writeField(target.dataset['key'], (target as HTMLSelectElement).value);
+    }.toJS);
+
+    // Special teams dropdowns
+    detail.addEventListener('change', (Event e) {
+      final target = e.target as HTMLElement?;
+      if (target == null || !target.classList.contains('tde-st-dropdown')) return;
+      final lineIndex = int.tryParse(target.dataset['line']) ?? -1;
+      final role      = target.dataset['role'];
+      final value     = (target as HTMLSelectElement).value;
+      if (lineIndex >= 0 && role.isNotEmpty) _writeStSlot(lineIndex, role, value);
     }.toJS);
 
     // Numeric +/-
@@ -461,6 +643,14 @@ class TeamDataEditorScreen {
     if (key == 'Nickname' || key == 'Abbrev' || key == 'City') {
       _updateListItem(_selectedIdx);
     }
+  }
+
+  void _writeStSlot(int lineIndex, String role, String newValue) {
+    final lines = _appState.textContent.split('\n');
+    if (lineIndex < 0 || lineIndex >= lines.length) return;
+    lines[lineIndex] = '$role,$newValue';
+    _appState.textContent = lines.join('\n');
+    _lastTextHash = _appState.textContent.hashCode;
   }
 
   void _updateListItem(int idx) {

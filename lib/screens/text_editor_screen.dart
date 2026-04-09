@@ -3,6 +3,55 @@ import 'package:web/web.dart';
 import 'package:nfl2k5tool_dart/nfl2k5tool_dart.dart';
 import '../app_state.dart';
 
+const _kTextCommandsContent = '''
+====== LookupAndModify ======
+If we wish to modify player data without specifying all the data we can use this feature.
+It is meant to be used in conjunction with the 'Key' command.
+The 'Position','fname' and 'lname' attributes must be specified for player lookup.
+
+Example:
+    LookupAndModify
+    Key= Position,fname,lname,Photo
+    QB,Jimmy,Garoppolo,0481,
+    QB,Nick,Mullens,0799,
+    RB,Tevin,Coleman,0187,
+    RB,Matt,Breida,0242,
+
+The above example will lookup the specified players and set their photo the the one specified.
+
+====== LookupAndVerify ======
+Example:
+    LookupAndVerify
+    Key= Position,fname,lname,Photo
+    QB,Jimmy,Garoppolo,0481,
+    QB,Nick,Mullens,0799,
+    RB,Tevin,Coleman,0187,
+    RB,Matt,Breida,0242,
+# Will produce error message for differences
+
+====== ApplyFormula ======
+Can be used to modify players meeting specified attributes.
+The 'Global Edit Form' Can be used to craft and apply formulas.
+The formulas will print to the console when they are run from the
+Global edit form so you can more easily see/create/use/re-use them.
+
+Basic syntax:
+    ApplyFormula(<formula>, <target attribute>, < target value>, [positions], <Mode (optional)>)
+
+Examples:
+    # For all kickers, punters or quarterbacks who have a white turtleneck, take away 1 speed point
+    ApplyFormula('Turtleneck = White','Speed',-1, [K,P,QB], Add)
+
+    # For all quarterbacks who wear a RightGlove, set their RightGlove to 'None'
+    ApplyFormula('RightGlove <> None','RightGlove','None', [QB])
+
+    # For all quarterbacks who have speed greater than 80, set their 'Stamana' to 95% of what it currently is
+    ApplyFormula('Speed > 80','Stamina',95, [QB], Percent)
+
+    # For all kickers and punters, set their stanama to '95'
+    ApplyFormula('Always','Stamina',95, [K,P])
+''';
+
 class TextEditorScreen {
   final AppState _appState;
   final HTMLElement _container;
@@ -69,7 +118,8 @@ class TextEditorScreen {
   <div class="text-editor-column">
 
     <div class="text-toolbar">
-      <button class="text-toolbar-btn" id="te-find-btn">Ctrl+F</button>
+      <button class="text-toolbar-btn" id="te-find-btn" title="Ctrl+F">🔍</button>
+      <button class="text-toolbar-btn" id="te-advanced-btn">Advanced</button>
       <button class="text-toolbar-btn${_wrapEnabled ? ' active' : ''}" id="te-wrap-btn"
         >Wrap: ${_wrapEnabled ? 'On' : 'Off'}</button>
     </div>
@@ -110,6 +160,7 @@ class TextEditorScreen {
   <button class="text-sidebar-btn" id="te-list"$dis>List Contents</button>
   <button class="text-sidebar-btn" id="te-reset-key"$dis>Reset Key</button>
   <button class="text-sidebar-btn" id="te-auto-fix"$dis>Auto Fix Skin/Face</button>
+  <button class="text-sidebar-btn" id="te-text-commands">Text Commands</button>
   <button class="text-sidebar-btn" id="te-clear">Clear</button>
   <div id="te-resize"
     style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;"></div>
@@ -188,6 +239,11 @@ class TextEditorScreen {
   void _wireToolbar(HTMLTextAreaElement area) {
     _container.querySelector('#te-find-btn')?.addEventListener('click', (Event _) {
       _openSearchPopup(area);
+    }.toJS);
+
+    _container.querySelector('#te-advanced-btn')?.addEventListener('click', (Event _) {
+      _sidebarCollapsed = !_sidebarCollapsed;
+      _rebuildSidebar(area);
     }.toJS);
 
     _container.querySelector('#te-wrap-btn')?.addEventListener('click', (Event _) {
@@ -270,6 +326,7 @@ ${_sidebarCollapsed ? '' : '''
 <button class="text-sidebar-btn" id="te-list"$dis>List Contents</button>
 <button class="text-sidebar-btn" id="te-reset-key"$dis>Reset Key</button>
 <button class="text-sidebar-btn" id="te-auto-fix"$dis>Auto Fix Skin/Face</button>
+<button class="text-sidebar-btn" id="te-text-commands">Text Commands</button>
 <button class="text-sidebar-btn" id="te-clear">Clear</button>
 <div id="te-resize"
   style="position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize;"></div>
@@ -294,6 +351,8 @@ ${_sidebarCollapsed ? '' : '''
         (Event _) { _doProcessText('Key=', 'Key reset'); }.toJS);
     _container.querySelector('#te-auto-fix')?.addEventListener('click',
         (Event _) { _doProcessText('AutoFixSkinFromPhoto', 'Auto fix applied'); }.toJS);
+    _container.querySelector('#te-text-commands')?.addEventListener('click',
+        (Event _) { _showTextCommandsModal(); }.toJS);
     _container.querySelector('#te-clear')?.addEventListener('click', (Event _) {
       _appState.textContent = '';
       area.value = '';
@@ -540,6 +599,45 @@ ${_sidebarCollapsed ? '' : '''
     overlay.querySelector('#te-modal-copy')?.addEventListener('click', (Event _) {
       window.navigator.clipboard.writeText(text);
     }.toJS);
+
+    JSFunction? escFn;
+    escFn = (KeyboardEvent e) {
+      if (e.key == 'Escape') {
+        document.removeEventListener('keydown', escFn!);
+        close();
+      }
+    }.toJS;
+    document.addEventListener('keydown', escFn);
+  }
+
+  // ─── Text Commands modal ──────────────────────────────────────────────────
+
+  void _showTextCommandsModal() {
+    final overlay = document.createElement('div') as HTMLElement
+      ..className = 'dialog-overlay';
+    overlay.innerHTML = '''
+<div class="dialog" style="max-width:680px;width:90%;max-height:80vh;display:flex;flex-direction:column;">
+  <div class="dialog-header">
+    <span>Text Commands</span>
+    <span class="material-symbols-outlined dialog-close">close</span>
+  </div>
+  <div class="dialog-body" style="overflow-y:auto;flex:1;padding:16px;">
+    <pre style="margin:0;font-size:12px;line-height:1.6;white-space:pre-wrap;
+                word-break:break-word;color:var(--color-text);
+                font-family:monospace;">${_esc(_kTextCommandsContent)}</pre>
+  </div>
+</div>'''.toJS;
+    document.body!.append(overlay);
+
+    void close() { overlay.remove(); }
+
+    overlay.querySelector('.dialog-close')
+        ?.addEventListener('click', (Event _) { close(); }.toJS);
+    overlay.addEventListener('click', (Event e) {
+      if ((e.target as HTMLElement?) == overlay) close();
+    }.toJS);
+    (overlay.firstElementChild as HTMLElement?)
+        ?.addEventListener('click', (Event e) { e.stopPropagation(); }.toJS);
 
     JSFunction? escFn;
     escFn = (KeyboardEvent e) {

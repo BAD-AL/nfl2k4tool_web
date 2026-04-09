@@ -66,7 +66,11 @@ class AppState {
       t.CoachKey = t.CoachKeyAll; // always use full key
       buf.write(t.GetCoachDataAll());
     }
-    if (opts.showTeamData) buf.write(t.GetTeamDataAll());
+    if (opts.showTeamData) {
+      buf.write('\n\n');
+      if (t.saveType == SaveType.Franchise) buf.write(t.getPlayerControlledTeams());
+      buf.write(t.GetTeamDataAll());
+    }
     if (opts.showSchedule && t.saveType == SaveType.Franchise) {
       buf.write('\n\n#Schedule\n');
       buf.write(t.GetSchedule());
@@ -74,6 +78,7 @@ class AppState {
     if (opts.autoUpdateDepthCharts) buf.write('\nAutoUpdateDepthChart');
     if (opts.autoUpdatePhotos) buf.write('\nAutoUpdatePhoto');
     if (opts.autoUpdatePBP) buf.write('\nAutoUpdatePBP');
+    if (opts.autoFixSkinFromPhoto) buf.write('\nAutoFixSkinFromPhoto');
     return buf.toString();
   }
 

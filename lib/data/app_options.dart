@@ -20,6 +20,7 @@ class AppOptions {
   bool autoUpdateDepthCharts;
   bool autoUpdatePhotos;
   bool autoUpdatePBP;
+  bool autoFixSkinFromPhoto;
 
   AppOptions({
     this.showPlayers = true,
@@ -34,6 +35,7 @@ class AppOptions {
     this.autoUpdateDepthCharts = true,
     this.autoUpdatePhotos = false,
     this.autoUpdatePBP = true,
+    this.autoFixSkinFromPhoto = false,
   });
 
   static AppOptions load() {
@@ -53,6 +55,7 @@ class AppOptions {
       autoUpdateDepthCharts: get('autoUpdateDepthCharts', true),
       autoUpdatePhotos:      get('autoUpdatePhotos', false),
       autoUpdatePBP:         get('autoUpdatePBP', true),
+      autoFixSkinFromPhoto:  get('autoFixSkinFromPhoto', false),
     );
   }
 
@@ -70,5 +73,6 @@ class AppOptions {
     s.setItem('autoUpdateDepthCharts', autoUpdateDepthCharts.toString());
     s.setItem('autoUpdatePhotos',      autoUpdatePhotos.toString());
     s.setItem('autoUpdatePBP',         autoUpdatePBP.toString());
+    s.setItem('autoFixSkinFromPhoto',  autoFixSkinFromPhoto.toString());
   }
 }
