@@ -20,7 +20,8 @@ class AppOptions {
   bool autoUpdatePhotos;
   bool autoUpdatePBP;
   bool autoFixSkinFromPhoto;
-  bool vrabelFix;
+  bool compressFANames;
+  int  compressFAValue;
 
   AppOptions({
     this.showPlayers = true,
@@ -35,13 +36,17 @@ class AppOptions {
     this.autoUpdatePhotos = false,
     this.autoUpdatePBP = true,
     this.autoFixSkinFromPhoto = false,
-    this.vrabelFix = true,
+    this.compressFANames = false,
+    this.compressFAValue = 50,
   });
 
   static AppOptions load() {
     final s = window.localStorage;
     bool get(String key, bool def) =>
         s.getItem(key) == null ? def : s.getItem(key) != 'false';
+    int getInt(String key, int def) =>
+        int.tryParse(s.getItem(key) ?? '') ?? def;
+
     return AppOptions(
       showPlayers:           get('showPlayers', true),
       showSchedule:          get('showSchedule', true),
@@ -55,7 +60,8 @@ class AppOptions {
       autoUpdatePhotos:      get('autoUpdatePhotos', false),
       autoUpdatePBP:         get('autoUpdatePBP', true),
       autoFixSkinFromPhoto:  get('autoFixSkinFromPhoto', false),
-      vrabelFix:             get('vrabelFix', true),
+      compressFANames:       get('compressFANames', false),
+      compressFAValue:       getInt('compressFAValue', 50),
     );
   }
 
@@ -73,6 +79,7 @@ class AppOptions {
     s.setItem('autoUpdatePhotos',      autoUpdatePhotos.toString());
     s.setItem('autoUpdatePBP',         autoUpdatePBP.toString());
     s.setItem('autoFixSkinFromPhoto',  autoFixSkinFromPhoto.toString());
-    s.setItem('vrabelFix',             vrabelFix.toString());
+    s.setItem('compressFANames',       compressFANames.toString());
+    s.setItem('compressFAValue',       compressFAValue.toString());
   }
 }

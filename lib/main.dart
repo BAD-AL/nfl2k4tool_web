@@ -331,9 +331,9 @@ void _showExportDialog() {
 void _exportAs(String name) {
   final tool = appState.tool;
   if (tool == null) return;
-
+  timestamp("Start: InputParser(tool).applyText");
   InputParser(tool).applyText(appState.textContent);
-
+  timestamp("End: InputParser(tool).applyText");
   final n = name.toLowerCase();
   try {
     Uint8List? bytes;

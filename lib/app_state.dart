@@ -1,4 +1,5 @@
 import 'package:nfl2k4tool_dart/nfl2k4tool_dart.dart';
+import 'package:collection/collection.dart';
 import 'data/app_options.dart';
 import 'data/text_parser.dart';
 
@@ -55,6 +56,13 @@ class AppState {
       key = const RosterKey(['Position', 'fname', 'lname', 'JerseyNumber']);
     }
 
+    // the 'RosterKey.current' field is settable by the user through the input parser.
+    // It defaults to 'RosterKey.all', so we'll test if it's been set 
+    if( !ListEquality().equals(RosterKey.current.fields, RosterKey.all.fields) ){
+      key = RosterKey.current;
+      print("Using Custom Key.");
+    }
+
     //if (opts.showPlayers || opts.showFreeAgents || opts.showDraftClass) {
     //  buf.write('#');
     //  buf.write(key.fields.join(','));
@@ -90,7 +98,7 @@ class AppState {
     if (opts.autoUpdatePhotos) buf.write('\nAutoUpdatePhoto');
     if (opts.autoUpdatePBP) buf.write('\nAutoUpdatePBP');
     if (opts.autoFixSkinFromPhoto) buf.write('\nAutoFixSkinFromPhoto');
-    if (opts.vrabelFix) buf.write('\nvrabelFix');
+    if (opts.compressFANames) buf.write('\nCompressFA=${opts.compressFAValue}');
     return buf.toString();
   }
 

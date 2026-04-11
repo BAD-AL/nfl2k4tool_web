@@ -25,3 +25,8 @@ class Shell {
     }
   }
 }
+
+void timestamp(String message) {
+  final now = DateTime.now().millisecondsSinceEpoch;
+  print('$message: $now ms');
+}

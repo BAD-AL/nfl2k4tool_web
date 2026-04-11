@@ -46,7 +46,18 @@ class OptionsScreen {
     ${_row('autoUpdatePhotos',      'Auto Update Photos',       o.autoUpdatePhotos)}
     ${_row('autoUpdatePBP',         'Auto Update PBP',          o.autoUpdatePBP)}
     ${_row('autoFixSkinFromPhoto',  'Auto Fix Skin from Photo', o.autoFixSkinFromPhoto)}
-    ${_row('vrabelFix',             'Vrabel Fix',               o.vrabelFix)}
+    <div class="options-row">
+      <span class="options-row-label">Compress Free Agent names</span>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <input type="number" data-key="compressFAValue" value="${o.compressFAValue}" 
+          style="width:50px; background:var(--color-chip); border:1px solid var(--color-border); 
+                 border-radius:4px; color:var(--color-text); padding:2px 4px; font-size:12px; outline:none;">
+        <label class="toggle-switch">
+          <input type="checkbox" data-key="compressFANames"${o.compressFANames ? ' checked' : ''}>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -74,7 +85,8 @@ class OptionsScreen {
   };
 
   static const _autoUpdateKeys = {
-    'autoUpdateDepthCharts', 'autoUpdatePhotos', 'autoUpdatePBP', 'autoFixSkinFromPhoto', 'vrabelFix',
+    'autoUpdateDepthCharts', 'autoUpdatePhotos', 'autoUpdatePBP', 'autoFixSkinFromPhoto',
+    'compressFANames', 'compressFAValue',
   };
 
   void _wireToggles() {
@@ -83,6 +95,16 @@ class OptionsScreen {
       final el = inputs.item(i) as HTMLInputElement;
       final key = el.dataset['key'];
       el.onchange = (Event _) {
+        if (el.type == 'number') {
+          final val = int.tryParse(el.value) ?? 50;
+          _applyNumericOption(key, val);
+          appState.options.save();
+          if (appState.hasFile) {
+            _syncAutoUpdateTags();
+            appState.notify();
+          }
+          return;
+        }
         final newValue = el.checked;
         if (_textViewKeys.contains(key)) {
           _handleTextViewToggle(el, key, newValue);
@@ -90,6 +112,12 @@ class OptionsScreen {
           _handleAutoUpdateToggle(key, newValue);
         }
       }.toJS;
+    }
+  }
+
+  void _applyNumericOption(String key, int value) {
+    if (key == 'compressFAValue') {
+      appState.options.compressFAValue = value;
     }
   }
 
@@ -141,13 +169,13 @@ class OptionsScreen {
         .replaceAll('\nAutoUpdatePhoto', '')
         .replaceAll('\nAutoUpdatePBP', '')
         .replaceAll('\nAutoFixSkinFromPhoto', '')
-        .replaceAll('\nvrabelFix', '');
+        .replaceAll(RegExp(r'\nCompressFA=\d+'), '');
     final o = appState.options;
     if (o.autoUpdateDepthCharts) text += '\nAutoUpdateDepthChart';
     if (o.autoUpdatePhotos) text += '\nAutoUpdatePhoto';
     if (o.autoUpdatePBP) text += '\nAutoUpdatePBP';
     if (o.autoFixSkinFromPhoto) text += '\nAutoFixSkinFromPhoto';
-    if (o.vrabelFix) text += '\nvrabelFix';
+    if (o.compressFANames) text += '\nCompressFA=${o.compressFAValue}';
     appState.textContent = text;
   }
 
@@ -168,7 +196,7 @@ class OptionsScreen {
       case 'autoUpdatePhotos':      o.autoUpdatePhotos = value;
       case 'autoUpdatePBP':         o.autoUpdatePBP = value;
       case 'autoFixSkinFromPhoto':  o.autoFixSkinFromPhoto = value;
-      case 'vrabelFix':             o.vrabelFix = value;
+      case 'compressFANames':       o.compressFANames = value;
     }
   }
 

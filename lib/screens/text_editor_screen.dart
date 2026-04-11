@@ -1,4 +1,5 @@
 import 'dart:js_interop';
+import 'package:nfl2k4tool_web/shell/shell.dart';
 import 'package:web/web.dart';
 import 'package:nfl2k4tool_dart/nfl2k4tool_dart.dart';
 import '../app_state.dart';
@@ -509,7 +510,9 @@ ${_sidebarCollapsed ? '' : '''
   void _applyToSave() {
     final tool = _appState.tool;
     if (tool == null) return;
+    timestamp("Start: InputParser(tool).applyText");
     final result = InputParser(tool).applyText(_appState.textContent);
+    timestamp("End: InputParser(tool).applyText");
     final msg = result.errors.isEmpty
         ? 'Done — ${result.updated} updated, ${result.skipped} skipped.'
         : 'Done — ${result.updated} updated, ${result.skipped} skipped.\n\nErrors:\n${result.errors.join('\n')}';

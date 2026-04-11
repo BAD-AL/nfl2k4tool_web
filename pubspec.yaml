@@ -13,6 +13,7 @@ dependencies:
     git:
       url: https://github.com/BAD-AL/nfl2k4tool_dart.git
       ref: main
+  collection: ^1.19.1
 
 dev_dependencies:
   webdev: ^3.0.0
